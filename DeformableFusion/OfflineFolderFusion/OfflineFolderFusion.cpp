@@ -27,6 +27,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 int DEPTH_CAMERAS_NUM = 1;
@@ -89,6 +90,10 @@ struct Live3DViewer
 	std::vector<float> vertices;
 	std::vector<unsigned char> colors;
 	std::vector<int> triangles;
+	std::vector<float> graphRestVertices;
+	std::vector<float> graphDeformedVertices;
+	std::vector<int> graphEdges;
+	bool showGraph = true;
 	float center[3] = { 0.0f, 0.0f, 0.0f };
 	float scale = 1.0f;
 	float rotX = -15.0f;
@@ -676,6 +681,10 @@ void display_live_3d_viewer()
 	std::vector<float> vertices;
 	std::vector<unsigned char> colors;
 	std::vector<int> triangles;
+	std::vector<float> graphRestVertices;
+	std::vector<float> graphDeformedVertices;
+	std::vector<int> graphEdges;
+	bool showGraph = true;
 	float center[3];
 	float scale = 1.0f;
 	int frame = 0;
@@ -684,6 +693,10 @@ void display_live_3d_viewer()
 		vertices = g_viewer3d.vertices;
 		colors = g_viewer3d.colors;
 		triangles = g_viewer3d.triangles;
+		graphRestVertices = g_viewer3d.graphRestVertices;
+		graphDeformedVertices = g_viewer3d.graphDeformedVertices;
+		graphEdges = g_viewer3d.graphEdges;
+		showGraph = g_viewer3d.showGraph;
 		center[0] = g_viewer3d.center[0];
 		center[1] = g_viewer3d.center[1];
 		center[2] = g_viewer3d.center[2];
@@ -760,10 +773,46 @@ void display_live_3d_viewer()
 		glEnd();
 	}
 
+	if (showGraph && !graphDeformedVertices.empty())
+	{
+		glDisable(GL_DEPTH_TEST);
+		glLineWidth(2.0f);
+		glBegin(GL_LINES);
+		glColor3f(0.1f, 0.95f, 1.0f);
+		for (size_t i = 0; i + 1 < graphEdges.size(); i += 2)
+		{
+			const int a = graphEdges[i];
+			const int b = graphEdges[i + 1];
+			if (a < 0 || b < 0 ||
+				static_cast<size_t>(a) * 3 + 2 >= graphDeformedVertices.size() ||
+				static_cast<size_t>(b) * 3 + 2 >= graphDeformedVertices.size()) continue;
+			const size_t av = static_cast<size_t>(a) * 3;
+			const size_t bv = static_cast<size_t>(b) * 3;
+			glVertex3f(graphDeformedVertices[av], graphDeformedVertices[av + 1], graphDeformedVertices[av + 2]);
+			glVertex3f(graphDeformedVertices[bv], graphDeformedVertices[bv + 1], graphDeformedVertices[bv + 2]);
+		}
+		glColor3f(1.0f, 0.55f, 0.05f);
+		for (size_t i = 0; i + 2 < graphRestVertices.size() && i + 2 < graphDeformedVertices.size(); i += 3)
+		{
+			glVertex3f(graphRestVertices[i], graphRestVertices[i + 1], graphRestVertices[i + 2]);
+			glVertex3f(graphDeformedVertices[i], graphDeformedVertices[i + 1], graphDeformedVertices[i + 2]);
+		}
+		glEnd();
+
+		glPointSize(7.0f);
+		glBegin(GL_POINTS);
+		glColor3f(1.0f, 0.92f, 0.1f);
+		for (size_t i = 0; i + 2 < graphDeformedVertices.size(); i += 3)
+			glVertex3f(graphDeformedVertices[i], graphDeformedVertices[i + 1], graphDeformedVertices[i + 2]);
+		glEnd();
+		glEnable(GL_DEPTH_TEST);
+	}
+
 	draw_viewer_text(12.0f, static_cast<float>(g_viewer3d.height - 28),
 		"frame " + std::to_string(frame) + "  vertices " + std::to_string(vertices.size() / 3) +
-		"  triangles " + std::to_string(triangles.size() / 3));
-	draw_viewer_text(12.0f, 18.0f, "Left drag: rotate   Right drag: pan   Wheel: zoom   R: reset   Esc/Q: close viewer");
+		"  triangles " + std::to_string(triangles.size() / 3) +
+		"  graph nodes " + std::to_string(graphDeformedVertices.size() / 3));
+	draw_viewer_text(12.0f, 18.0f, "Left drag: rotate   Right drag: pan   Wheel: zoom   G: graph   R: reset   Esc/Q: close viewer");
 	glutSwapBuffers();
 }
 
@@ -793,6 +842,11 @@ void keyboard_live_3d_viewer(unsigned char key, int, int)
 		g_viewer3d.panX = 0.0f;
 		g_viewer3d.panY = 0.0f;
 		g_viewer3d.zoom = 1.0f;
+		glutPostRedisplay();
+	}
+	if (key == 'g' || key == 'G')
+	{
+		g_viewer3d.showGraph = !g_viewer3d.showGraph;
 		glutPostRedisplay();
 	}
 }
@@ -904,6 +958,66 @@ void update_live_3d_viewer(const fs::path& surfacePath, const cv::Mat* colorImag
 		g_viewer3d.center[2] = center[2];
 		g_viewer3d.scale = 1.2f / radius;
 		g_viewer3d.frame = frame;
+	}
+
+	glutSetWindow(g_viewer3d.window);
+	glutPostRedisplay();
+	glutMainLoopEvent();
+}
+
+void update_live_3d_graph(EDNodesParasGPU edNodes, const Options& opt)
+{
+	if (!opt.viewer3d || !g_viewer3d.initialized || g_viewer3d.closed) return;
+
+	int nodesNum = 0;
+	checkCudaErrors(cudaMemcpy(&nodesNum, edNodes.ed_nodes_num_gpu.dev_ptr, sizeof(int), cudaMemcpyDeviceToHost));
+	nodesNum = std::clamp(nodesNum, 0, edNodes.ed_nodes_num_gpu.max_size);
+	if (nodesNum <= 0) return;
+
+	std::vector<DeformGraphNodeCuda> nodes(nodesNum);
+	checkCudaErrors(cudaMemcpy(nodes.data(), edNodes.dev_ed_nodes, sizeof(DeformGraphNodeCuda) * nodesNum, cudaMemcpyDeviceToHost));
+
+	std::vector<float> restVertices;
+	std::vector<float> deformedVertices;
+	restVertices.reserve(static_cast<size_t>(nodesNum) * 3);
+	deformedVertices.reserve(static_cast<size_t>(nodesNum) * 3);
+	for (const auto& node : nodes)
+	{
+		const float gx = node.g[0];
+		const float gy = node.g[1];
+		const float gz = node.g[2];
+		restVertices.push_back(gx);
+		restVertices.push_back(gy);
+		restVertices.push_back(gz);
+		deformedVertices.push_back(gx + node.t[0]);
+		deformedVertices.push_back(gy + node.t[1]);
+		deformedVertices.push_back(gz + node.t[2]);
+	}
+
+	std::vector<int> edges;
+	std::unordered_set<unsigned long long> seen;
+	for (int i = 0; i < nodesNum; ++i)
+	{
+		for (int k = 0; k < EDNODE_NN_MAX; ++k)
+		{
+			const int j = nodes[i].neighbors[k];
+			if (j < 0 || j >= nodesNum || j == i) continue;
+			const int a = std::min(i, j);
+			const int b = std::max(i, j);
+			const unsigned long long key = (static_cast<unsigned long long>(a) << 32) | static_cast<unsigned int>(b);
+			if (seen.insert(key).second)
+			{
+				edges.push_back(a);
+				edges.push_back(b);
+			}
+		}
+	}
+
+	{
+		std::lock_guard<std::mutex> lock(g_viewer3d.mutex);
+		g_viewer3d.graphRestVertices.swap(restVertices);
+		g_viewer3d.graphDeformedVertices.swap(deformedVertices);
+		g_viewer3d.graphEdges.swap(edges);
 	}
 
 	glutSetWindow(g_viewer3d.window);
@@ -1269,16 +1383,17 @@ int main(int argc, char** argv)
 
 			std::cout << "Frame " << frame << "/" << (frameCount - 1) << "\n";
 			f2f.add_a_frame(depths, f2fOutDir, frame, false);
+			EDNodesParasGPU edInit = f2f.ed_nodes_for_init();
 			char surfaceFilename[64];
 			std::snprintf(surfaceFilename, sizeof(surfaceFilename), "accu_surface_%04d.bin", frame);
 			const cv::Mat* previewColor = colorImages.empty() ? nullptr : &colorImages.front();
 			dump_surface_if_requested(f2fOutputDir / surfaceFilename, surfaceDumpDir, frame, previewColor, opt, depthWidth, depthHeight);
 			update_live_3d_viewer(f2fOutputDir / surfaceFilename, previewColor, opt, depthWidth, depthHeight, frame);
+			update_live_3d_graph(edInit, opt);
 			if (opt.preview && frame % opt.previewEvery == 0)
 			{
 				if (!show_live_preview(f2fOutputDir / surfaceFilename, previewColor, opt, depthWidth, depthHeight)) return 0;
 			}
-			EDNodesParasGPU edInit = f2f.ed_nodes_for_init();
 			fusion4d.add_a_frame(depths, &edInit, fusion4dOutDir, frame, false);
 			cudaDeviceSynchronize();
 		}
