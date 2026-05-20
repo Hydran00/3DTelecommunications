@@ -2,6 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
+    <NVCUDASAMPLES_ROOT Condition="'$(NVCUDASAMPLES_ROOT)' == ''">C:\ProgramData\NVIDIA Corporation\CUDA Samples\v11.7</NVCUDASAMPLES_ROOT>
     <CUDA_SAMPLES_INC_DIR>$(NVCUDASAMPLES_ROOT)\common\inc\</CUDA_SAMPLES_INC_DIR>
     <CUDA_SDK_INC_DIR>$(CUDA_PATH)include\</CUDA_SDK_INC_DIR>
     <CUDA_SDK_LIB_DIR>$(CUDA_PATH)lib\$(PlatformTarget)\</CUDA_SDK_LIB_DIR>
@@ -9,7 +10,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CUDA_SAMPLES_INC_DIR);$(CUDA_SDK_INC_DIR)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(PEABODY_DIR)DeformableFusion\Common\cuda;$(CUDA_SAMPLES_INC_DIR);$(CUDA_SDK_INC_DIR)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CUDA_SDK_LIB_DIR);</AdditionalLibraryDirectories>

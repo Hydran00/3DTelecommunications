@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <GLEW_ROOT>$(PEABODY_DEPENDENCY_DIR)glew\glew-1.7.0-win64\</GLEW_ROOT>
+    <GLEW_ROOT>$(PEABODY_DEPENDENCY_DIR)</GLEW_ROOT>
     <GLEW_INC_DIR>$(GLEW_ROOT)include\</GLEW_INC_DIR>
     <GLEW_LIB_DIR>$(GLEW_ROOT)lib\</GLEW_LIB_DIR>
     <GLEW_BIN_DIR>$(GLEW_ROOT)bin\</GLEW_BIN_DIR>
@@ -14,7 +14,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(GLEW_LIB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32-64bit.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>Echo Copying GLEW dlls

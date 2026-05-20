@@ -7,7 +7,7 @@
 #include "DeformGraphOptDensePtsAndClr.h"
 #include "DDF.h"
 #include "KL_features.h"
-#include "visual_feature_matching.h"
+#include "S3DPointMatchSet.h"
 
 #include "suitesparse.h"
 #include "lmsolver.h"

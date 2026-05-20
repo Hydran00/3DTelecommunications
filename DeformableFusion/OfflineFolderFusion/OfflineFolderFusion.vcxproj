@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A8E4A443-3D22-4C9F-B7C0-4F7C3D0A4B77}</ProjectGuid>
+    <ProjectName>OfflineFolderFusion</ProjectName>
+    <RootNamespace>OfflineFolderFusion</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(CUDA_PATH_V11_7)\extras\visual_studio_integration\MSBuildExtensions\CUDA 11.7.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\PeabodyConfigurationMacros.props" />
+    <Import Project="..\..\Peabody.x64.VXL.props" />
+    <Import Project="..\..\Peabody.x64.debug.cuda.props" />
+    <Import Project="..\..\Peabody.x64.JSON.props" />
+    <Import Project="..\..\Peabody.x64.debug.SuiteSparse_mkl.props" />
+    <Import Project="..\..\Peabody.x64.debug.ceres-solver.props" />
+    <Import Project="..\..\Peabody.x64.McLib2.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\PeabodyConfigurationMacros.props" />
+    <Import Project="..\..\Peabody.x64.VXL.props" />
+    <Import Project="..\..\Peabody.x64.release.cuda.props" />
+    <Import Project="..\..\Peabody.x64.JSON.props" />
+    <Import Project="..\..\Peabody.x64.release.SuiteSparse_mkl.props" />
+    <Import Project="..\..\Peabody.x64.release.ceres-solver.props" />
+    <Import Project="..\..\Peabody.x64.McLib2.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(MSBuildProjectDirectory)\..\x64\$(Configuration)\</OutDir>
+    <IntDir>$(MSBuildProjectDirectory)\x64\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(MSBuildProjectDirectory)\..\x64\$(Configuration)\</OutDir>
+    <IntDir>$(MSBuildProjectDirectory)\x64\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(MSBuildProjectDirectory)\..\CSurface;$(MSBuildProjectDirectory)\..\Utility;$(MSBuildProjectDirectory)\..\Basics;$(MSBuildProjectDirectory)\..\CameraView;$(MSBuildProjectDirectory)\..\NonrigidMatch;$(MSBuildProjectDirectory)\..\FastNonrigidMatching;$(MSBuildProjectDirectory)\..\FusionDemo-MultiView;$(PEABODY_DIR);$(PEABODY_DIR)Dependencies\opencv\build\install\include;$(PEABODY_DIR)Dependencies\opencv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;GLOG_NO_ABBREVIATED_SEVERITIES;USE_CERES_SOLVER;OPENCV_VERSION=2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(MSBuildProjectDirectory)\..\x64\$(Configuration);$(PEABODY_DEPENDENCY_DIR)lib;$(PEABODY_DIR)Dependencies\opencv\build\install\x64\vc16\lib;$(PEABODY_DIR)Dependencies\opencv\build\3rdparty\lib\Release;$(PEABODY_DIR)Dependencies\opencv\build\3rdparty\ippicv\ippicv_win\icv\lib\intel64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>FastNonrigidMatching.lib;NonRigidMatch.lib;Utility.lib;CSurface.lib;Basics.lib;CameraView.lib;LibUtility.lib;opencv_aruco454.lib;opencv_bgsegm454.lib;opencv_bioinspired454.lib;opencv_calib3d454.lib;opencv_ccalib454.lib;opencv_core454.lib;opencv_cudaarithm454.lib;opencv_cudabgsegm454.lib;opencv_cudacodec454.lib;opencv_cudafeatures2d454.lib;opencv_cudafilters454.lib;opencv_cudaimgproc454.lib;opencv_cudalegacy454.lib;opencv_cudaoptflow454.lib;opencv_cudastereo454.lib;opencv_cudawarping454.lib;opencv_cudev454.lib;opencv_datasets454.lib;opencv_features2d454.lib;opencv_flann454.lib;opencv_fuzzy454.lib;opencv_gapi454.lib;opencv_hfs454.lib;opencv_highgui454.lib;opencv_img_hash454.lib;opencv_imgcodecs454.lib;opencv_imgproc454.lib;opencv_intensity_transform454.lib;opencv_line_descriptor454.lib;opencv_ml454.lib;opencv_optflow454.lib;opencv_phase_unwrapping454.lib;opencv_photo454.lib;opencv_plot454.lib;opencv_quality454.lib;opencv_rapid454.lib;opencv_reg454.lib;opencv_rgbd454.lib;opencv_saliency454.lib;opencv_shape454.lib;opencv_stereo454.lib;opencv_stitching454.lib;opencv_structured_light454.lib;opencv_superres454.lib;opencv_surface_matching454.lib;opencv_tracking454.lib;opencv_video454.lib;opencv_videoio454.lib;opencv_videostab454.lib;opencv_xfeatures2d454.lib;opencv_ximgproc454.lib;opencv_xphoto454.lib;ade.lib;IlmImf.lib;ippicvmt.lib;ippiw.lib;ittnotify.lib;libjpeg-turbo.lib;libopenjp2.lib;libpng.lib;libtiff.lib;libwebp.lib;zlib.lib;geotiff_i.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>geotiff.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <AdditionalOptions>/NODEFAULTLIB:geotiff.lib %(AdditionalOptions)</AdditionalOptions>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(PEABODY_DIR)Dependencies\opencv\build\install\x64\vc16\bin\opencv*.dll" copy /Y "$(PEABODY_DIR)Dependencies\opencv\build\install\x64\vc16\bin\opencv*.dll" "$(OutDir)"
+if exist "$(PEABODY_DEPENDENCY_DIR)bin\*.dll" copy /Y "$(PEABODY_DEPENDENCY_DIR)bin\*.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(MSBuildProjectDirectory)\..\CSurface;$(MSBuildProjectDirectory)\..\Utility;$(MSBuildProjectDirectory)\..\Basics;$(MSBuildProjectDirectory)\..\CameraView;$(MSBuildProjectDirectory)\..\NonrigidMatch;$(MSBuildProjectDirectory)\..\FastNonrigidMatching;$(MSBuildProjectDirectory)\..\FusionDemo-MultiView;$(PEABODY_DIR);$(PEABODY_DIR)Dependencies\opencv\build\install\include;$(PEABODY_DIR)Dependencies\opencv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;GLOG_NO_ABBREVIATED_SEVERITIES;USE_CERES_SOLVER;OPENCV_VERSION=2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <OpenMPSupport>true</OpenMPSupport>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ShowIncludes>false</ShowIncludes>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(MSBuildProjectDirectory)\..\x64\$(Configuration);$(PEABODY_DEPENDENCY_DIR)lib;$(PEABODY_DIR)Dependencies\opencv\build\install\x64\vc16\lib;$(PEABODY_DIR)Dependencies\opencv\build\3rdparty\lib\Release;$(PEABODY_DIR)Dependencies\opencv\build\3rdparty\ippicv\ippicv_win\icv\lib\intel64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>FastNonrigidMatching.lib;NonRigidMatch.lib;Utility.lib;CSurface.lib;Basics.lib;CameraView.lib;LibUtility.lib;opencv_aruco454.lib;opencv_bgsegm454.lib;opencv_bioinspired454.lib;opencv_calib3d454.lib;opencv_ccalib454.lib;opencv_core454.lib;opencv_cudaarithm454.lib;opencv_cudabgsegm454.lib;opencv_cudacodec454.lib;opencv_cudafeatures2d454.lib;opencv_cudafilters454.lib;opencv_cudaimgproc454.lib;opencv_cudalegacy454.lib;opencv_cudaoptflow454.lib;opencv_cudastereo454.lib;opencv_cudawarping454.lib;opencv_cudev454.lib;opencv_datasets454.lib;opencv_features2d454.lib;opencv_flann454.lib;opencv_fuzzy454.lib;opencv_gapi454.lib;opencv_hfs454.lib;opencv_highgui454.lib;opencv_img_hash454.lib;opencv_imgcodecs454.lib;opencv_imgproc454.lib;opencv_intensity_transform454.lib;opencv_line_descriptor454.lib;opencv_ml454.lib;opencv_optflow454.lib;opencv_phase_unwrapping454.lib;opencv_photo454.lib;opencv_plot454.lib;opencv_quality454.lib;opencv_rapid454.lib;opencv_reg454.lib;opencv_rgbd454.lib;opencv_saliency454.lib;opencv_shape454.lib;opencv_stereo454.lib;opencv_stitching454.lib;opencv_structured_light454.lib;opencv_superres454.lib;opencv_surface_matching454.lib;opencv_tracking454.lib;opencv_video454.lib;opencv_videoio454.lib;opencv_videostab454.lib;opencv_xfeatures2d454.lib;opencv_ximgproc454.lib;opencv_xphoto454.lib;ade.lib;IlmImf.lib;ippicvmt.lib;ippiw.lib;ittnotify.lib;libjpeg-turbo.lib;libopenjp2.lib;libpng.lib;libtiff.lib;libwebp.lib;zlib.lib;geotiff_i.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>geotiff.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <AdditionalOptions>/NODEFAULTLIB:geotiff.lib %(AdditionalOptions)</AdditionalOptions>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(PEABODY_DIR)Dependencies\opencv\build\install\x64\vc16\bin\opencv*.dll" copy /Y "$(PEABODY_DIR)Dependencies\opencv\build\install\x64\vc16\bin\opencv*.dll" "$(OutDir)"
+if exist "$(PEABODY_DEPENDENCY_DIR)bin\*.dll" copy /Y "$(PEABODY_DEPENDENCY_DIR)bin\*.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="OfflineFolderFusion.cpp" />
+    <ClCompile Include="..\FusionDemo-MultiView\FusionConfig.cpp" />
+    <ClCompile Include="..\FusionDemo-MultiView\GlobalDataStatic.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Basics\Basics.vcxproj">
+      <Project>{76F10C63-CA82-4047-A868-DC1C6C4A6F50}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\CameraView\CameraView.vcxproj">
+      <Project>{9F141529-22BE-4B4D-A8F7-0F948AE7978B}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\CSurface\CSurface.vcxproj">
+      <Project>{F279DFEE-F193-429B-95C0-50D69E5413AD}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\FastNonrigidMatching\FastNonrigidMatching.vcxproj">
+      <Project>{C3EE02AB-C76C-4179-8B2C-B37C3805ADA2}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NonRigidMatch\NonRigidMatch.vcxproj">
+      <Project>{135A0214-46E7-4FAD-B99E-760A98EDB4C6}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Utility\Utility.vcxproj">
+      <Project>{9C286B03-3DEC-4A13-852C-9105A68400EF}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\McLib2\LibUtility\LibUtility.vcxproj">
+      <Project>{36ED74A5-0C0D-4F9C-A4C4-358CE4509232}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(CUDA_PATH_V11_7)\extras\visual_studio_integration\MSBuildExtensions\CUDA 11.7.targets" />
+  </ImportGroup>
+</Project>

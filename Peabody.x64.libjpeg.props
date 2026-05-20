@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <LIBJPEG_ROOT>$(PEABODY_DEPENDENCY_DIR)jpeglib\</LIBJPEG_ROOT>
+    <LIBJPEG_ROOT>$(PEABODY_DEPENDENCY_DIR)</LIBJPEG_ROOT>
     <LIBJPEG_INC_DIR>$(LIBJPEG_ROOT)include\</LIBJPEG_INC_DIR>
     <LIBJPEG_LIB_DIR>$(LIBJPEG_ROOT)lib\</LIBJPEG_LIB_DIR>
   </PropertyGroup>
@@ -13,7 +13,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(LIBJPEG_LIB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libjpeg.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>jpeg.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

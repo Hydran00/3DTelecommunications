@@ -2,11 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <SUITESPARSE_ROOT>$(PEABODY_DEPENDENCY_DIR)Suitesparse-metis-for-windows\</SUITESPARSE_ROOT>
-    <SUITESPARSE_DIR>$(SUITESPARSE_ROOT)VSBUILD\</SUITESPARSE_DIR>
-    <SUITESPARSE_INC_DIR>$(SUITESPARSE_DIR)Include\suitesparse\</SUITESPARSE_INC_DIR>
-    <SUITESPARSE_LIB_DIR>$(SUITESPARSE_DIR)lib\</SUITESPARSE_LIB_DIR>
-    <SUITESPARSE_MKL_LIB_DIR>$(SUITESPARSE_ROOT)mkl_lib_intel64\</SUITESPARSE_MKL_LIB_DIR>
+    <SUITESPARSE_ROOT>$(PEABODY_DEPENDENCY_DIR)</SUITESPARSE_ROOT>
+    <SUITESPARSE_DIR>$(SUITESPARSE_ROOT)</SUITESPARSE_DIR>
+    <SUITESPARSE_INC_DIR>$(SUITESPARSE_ROOT)include\suitesparse\</SUITESPARSE_INC_DIR>
+    <SUITESPARSE_LIB_DIR>$(SUITESPARSE_ROOT)lib\</SUITESPARSE_LIB_DIR>
+    <SUITESPARSE_MKL_LIB_DIR>$(SUITESPARSE_ROOT)lib\</SUITESPARSE_MKL_LIB_DIR>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
@@ -15,7 +15,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SUITESPARSE_MKL_LIB_DIR);$(SUITESPARSE_LIB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libamd.lib;libbtf.lib;libcamd.lib;libccolamd.lib;libcholmod.lib;libcolamd.lib;libcxsparse.lib;libklu.lib;libldl.lib;libspqr.lib;libumfpack.lib;suitesparseconfig.lib;mkl_core.lib;mkl_intel_lp64.lib;mkl_intel_ilp64.lib;mkl_sequential.lib;mkl_blacs_intelmpi_ilp64.lib;mkl_blacs_intelmpi_lp64.lib;mkl_blacs_mpich2_ilp64.lib;mkl_blacs_mpich2_lp64.lib;mkl_blacs_msmpi_ilp64.lib;mkl_blacs_msmpi_lp64.lib;mkl_blas95_ilp64.lib;mkl_blas95_lp64.lib;mkl_cdft_core.lib;mkl_intel_sp2dp.lib;mkl_intel_thread.lib;mkl_lapack95_ilp64.lib;mkl_lapack95_lp64.lib;mkl_pgi_thread.lib;mkl_scalapack_ilp64.lib;mkl_scalapack_lp64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>amd.lib;btf.lib;camd.lib;ccolamd.lib;cholmod.lib;colamd.lib;cxsparse.lib;klu.lib;ldl.lib;suitesparseconfig.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>%(Command)</Command>

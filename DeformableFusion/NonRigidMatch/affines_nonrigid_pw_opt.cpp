@@ -681,7 +681,7 @@ void affine_set_nonrigid_pw_opt(CSurface<float> const& surface_in, DeformGraph *
 	options.logging_type = SILENT;// PER_MINIMIZER_ITERATION;
 	options.minimizer_progress_to_stdout = false;
 	options.num_threads = omp_get_num_procs();
-	options.num_linear_solver_threads =  omp_get_num_procs();
+	options.num_threads =  omp_get_num_procs();
 	options.dynamic_sparsity = false;
 	options.callbacks.push_back(new AffineSetNonrigidPWIterCallBack());
 
@@ -1335,7 +1335,7 @@ void affine_set_nonrigid_pw_opt(CSurface<float> const& surface_in, DeformGraph *
 	options.logging_type = SILENT;// PER_MINIMIZER_ITERATION;
 	options.minimizer_progress_to_stdout = false;
 	options.num_threads = omp_get_num_procs();
-	options.num_linear_solver_threads = omp_get_num_procs();
+	options.num_threads = omp_get_num_procs();
 	options.dynamic_sparsity = false;
 	options.callbacks.push_back(new AffineSetNonrigidPWIterCallBack());
 

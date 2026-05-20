@@ -298,7 +298,7 @@ void LMICP::run_opt_ceres(DeformGraphOptMultiDataDensePtsAndClr &data, int step)
     options.parameter_tolerance = 1e-8;
 	options.minimizer_progress_to_stdout = false;
 	options.num_threads = omp_get_num_procs();
-	options.num_linear_solver_threads = omp_get_num_procs();
+	options.num_threads = omp_get_num_procs();
 	options.use_nonmonotonic_steps = false;
 	options.update_state_every_iteration = false;
 

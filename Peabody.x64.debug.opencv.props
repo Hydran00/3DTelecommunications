@@ -2,18 +2,19 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <OPENCV_ROOT>$(PEABODY_DEPENDENCY_DIR)OpenCV454\</OPENCV_ROOT>
-    <OPENCV_DIR>$(OPENCV_ROOT)VSBUILD\install\</OPENCV_DIR>
-    <OPENCV_INC_DIR>$(OPENCV_DIR)include\</OPENCV_INC_DIR>
-    <OPENCV_BIN_DIR>$(OPENCV_DIR)$(Platform)\vc16\bin\</OPENCV_BIN_DIR>
-    <OPENCV_LIB_DIR>$(OPENCV_DIR)$(Platform)\vc16\lib\</OPENCV_LIB_DIR>
+    <OPENCV_ROOT>$(PEABODY_DIR)Dependencies\opencv\</OPENCV_ROOT>
+    <OPENCV_DIR>$(OPENCV_ROOT)build\</OPENCV_DIR>
+    <OPENCV_INC_DIR>$(OPENCV_ROOT)include\</OPENCV_INC_DIR>
+    <OPENCV_MOD_INC_DIRS>$(OPENCV_ROOT)modules\core\include;$(OPENCV_ROOT)modules\imgproc\include;$(OPENCV_ROOT)modules\highgui\include;$(OPENCV_ROOT)modules\imgcodecs\include;$(OPENCV_ROOT)modules\videoio\include;$(OPENCV_ROOT)modules\calib3d\include;$(OPENCV_ROOT)modules\features2d\include;$(OPENCV_ROOT)modules\flann\include;$(OPENCV_ROOT)modules\ml\include;$(OPENCV_ROOT)modules\photo\include;$(OPENCV_ROOT)modules\video\include;$(OPENCV_ROOT)modules\objdetect\include;$(OPENCV_ROOT)modules\stitching\include;$(OPENCV_ROOT)modules\dnn\include;$(OPENCV_ROOT)modules\aruco\include;$(OPENCV_ROOT)modules\xfeatures2d\include;$(OPENCV_ROOT)modules\tracking\include;$(OPENCV_ROOT)modules\ximgproc\include;$(OPENCV_ROOT)modules\gapi\include;$(OPENCV_ROOT)modules\cudaarithm\include;$(OPENCV_ROOT)modules\cudaimgproc\include;$(OPENCV_ROOT)modules\cudafilters\include;$(OPENCV_ROOT)modules\cudafeatures2d\include;$(OPENCV_ROOT)modules\cudawarping\include;$(OPENCV_ROOT)modules\cudev\include</OPENCV_MOD_INC_DIRS>
+    <OPENCV_BIN_DIR>$(OPENCV_DIR)bin\Debug\</OPENCV_BIN_DIR>
+    <OPENCV_LIB_DIR>$(OPENCV_DIR)lib\Debug\</OPENCV_LIB_DIR>
   </PropertyGroup>
   <PropertyGroup>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(OPENCV_INC_DIR);</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(OPENCV_DIR);$(OPENCV_INC_DIR);$(OPENCV_MOD_INC_DIRS);</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(OPENCV_LIB_DIR);</AdditionalLibraryDirectories>

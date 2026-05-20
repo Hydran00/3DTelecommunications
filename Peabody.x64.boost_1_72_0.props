@@ -2,13 +2,13 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <BOOST_1_72_0_ROOT>$(PEABODY_DEPENDENCY_DIR)boost_1_72_0\</BOOST_1_72_0_ROOT>
-    <BOOST_1_72_0_LIB_DIR>$(BOOST_1_72_0_ROOT)lib64-msvc-14.2\</BOOST_1_72_0_LIB_DIR>
+    <BOOST_1_72_0_ROOT>$(PEABODY_DEPENDENCY_DIR)</BOOST_1_72_0_ROOT>
+    <BOOST_1_72_0_LIB_DIR>$(BOOST_1_72_0_ROOT)lib\</BOOST_1_72_0_LIB_DIR>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(BOOST_1_72_0_ROOT);$(BOOST_1_72_0_ROOT)boost\;%(AdditionalIncludeDirectories);</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BOOST_1_72_0_ROOT)include\;%(AdditionalIncludeDirectories);</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(BOOST_1_72_0_LIB_DIR);%(AdditionalLibraryDirectories);</AdditionalLibraryDirectories>

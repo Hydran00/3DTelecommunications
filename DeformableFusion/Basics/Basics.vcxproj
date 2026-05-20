@@ -107,7 +107,10 @@
     </ClCompile>
     <ClCompile Include="track_extraction_basic.cpp" />
     <ClCompile Include="TSDF.cpp" />
-    <ClCompile Include="visual_feature_matching.cpp" />
+    <ClCompile Include="visual_feature_matching.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClInclude Include="voxel_data_io.h" />
   </ItemGroup>
   <ItemGroup>

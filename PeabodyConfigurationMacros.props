@@ -4,7 +4,8 @@
   <PropertyGroup Label="UserMacros">
       <PEABODY_DIR>$(MSBuildThisFileDirectory)</PEABODY_DIR>
       <PEABODY_DEPENDENCY_DIR Condition="Exists('$(MSBuildThisFileDirectory)\Dependencies\Depends_Version.txt')">$(MSBuildThisFileDirectory)Dependencies\</PEABODY_DEPENDENCY_DIR>
-      <PEABODY_DEPENDENCY_DIR Condition="!Exists('$(MSBuildThisFileDirectory)\Dependencies\Depends_Version.txt')">$(SYS_PEABODY_DEPENDENCY_DIR)</PEABODY_DEPENDENCY_DIR>
+      <PEABODY_DEPENDENCY_DIR Condition="Exists('C:\vcpkg\installed\x64-windows')">C:\vcpkg\installed\x64-windows\</PEABODY_DEPENDENCY_DIR>
+      <PEABODY_DEPENDENCY_DIR Condition="'$(PEABODY_DEPENDENCY_DIR)' == ''">$(SYS_PEABODY_DEPENDENCY_DIR)</PEABODY_DEPENDENCY_DIR>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />

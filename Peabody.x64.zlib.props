@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <ZLIB_ROOT>$(PEABODY_DEPENDENCY_DIR)zlib\</ZLIB_ROOT>
+    <ZLIB_ROOT>$(PEABODY_DEPENDENCY_DIR)</ZLIB_ROOT>
     <ZLIB_INC_DIR>$(ZLIB_ROOT)include\</ZLIB_INC_DIR>
     <ZLIB_LIB_DIR>$(ZLIB_ROOT)lib\</ZLIB_LIB_DIR>
   </PropertyGroup>
@@ -12,7 +12,7 @@
       <AdditionalIncludeDirectories>$(ZLIB_INC_DIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>zlib-$(Platform)-$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>z.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ZLIB_LIB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>

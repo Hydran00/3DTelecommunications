@@ -2,16 +2,16 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <GLUT_ROOT>$(PEABODY_DEPENDENCY_DIR)freeglut\</GLUT_ROOT>
+    <GLUT_ROOT>$(PEABODY_DEPENDENCY_DIR)</GLUT_ROOT>
     <GLUT_INC_DIR>$(GLUT_ROOT)include\</GLUT_INC_DIR>
-    <GLUT_LIB_DIR>$(GLUT_ROOT)lib\$(Platform)\</GLUT_LIB_DIR>
-    <GLUT_BIN_DIR>$(GLUT_ROOT)lib\$(Platform)\</GLUT_BIN_DIR>
+    <GLUT_LIB_DIR>$(GLUT_ROOT)lib\</GLUT_LIB_DIR>
+    <GLUT_BIN_DIR>$(GLUT_ROOT)bin\</GLUT_BIN_DIR>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
     <PostBuildEvent>
       <Command>echo Copying FreeGLUT DLLs
-copy $(GLUT_BIN_DIR)\freeglut.dll $(OutDir)
+copy $(GLUT_BIN_DIR)freeglut.dll $(OutDir)
 %(Command)
 </Command>
     </PostBuildEvent>
@@ -20,7 +20,7 @@ copy $(GLUT_BIN_DIR)\freeglut.dll $(OutDir)
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(GLUT_LIB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>freeglut64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freeglut.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -259,7 +259,7 @@ void deform_graph_optimization_ceres(DeformGraphOptMultiData &data)
 	options.minimizer_progress_to_stdout = false;
 	options.logging_type = ceres::PER_MINIMIZER_ITERATION;
 	options.num_threads = omp_get_num_procs();
-	options.num_linear_solver_threads = omp_get_num_procs();
+	options.num_threads = omp_get_num_procs();
 	options.callbacks.push_back(new IterCallBackBasic());
 
 	Solver::Summary summary;

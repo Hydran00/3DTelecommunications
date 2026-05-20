@@ -3,10 +3,14 @@ cmake_minimum_required(VERSION 3.5)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
 
-set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
-set(CUDA_CUDART_LIBRARY /usr/lcoal/cuda/lib64)
+if(NOT WIN32)
+    set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+    set(CUDA_CUDART_LIBRARY /usr/local/cuda/lib64)
+endif()
 
-add_compile_options(-Wall -Werror -fopenmp)
+if(NOT MSVC)
+    add_compile_options(-Wall -Werror -fopenmp)
+endif()
 project(Peabody LANGUAGES CXX)
 
 ## load in pkg-config support

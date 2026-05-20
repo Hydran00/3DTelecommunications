@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "suitesparse.h"
-#include "cholmod_internal.h"
 #include "UtilVnlMatrix.h"
+
+typedef int32_t CholmodIndex;
 
 //depdendency from vnl matrix -->vnl_c_vector -->vnl_numeric_traits
 template <>
@@ -40,7 +41,7 @@ CreateSparseMatrix(BlockedHessianMatrix const&H)
 	//column-compressed matrix
 	int nz_num = blk_num * 12 * 12 - para_blk_num * 66;
 	cholmod_sparse *A = cholmod_allocate_sparse(para_blk_num*12, para_blk_num*12, nz_num, 
-							TRUE, TRUE, -1, CHOLMOD_REAL, &cc_);
+							true, true, -1, CHOLMOD_REAL, &cc_);
 
 	int nz_count = 0;
 	for (int c = 0; c < para_blk_num; c++) //c: paarmeter block column
@@ -60,11 +61,11 @@ CreateSparseMatrix(BlockedHessianMatrix const&H)
 			//idx of the first non-zero element of the current column
 			int idx = nz_count + blks_num_per_col*12*i - ((i*(i-1))/2);
 
-			((Int*)(A->p))[c * 12 + i] = idx;
+			((CholmodIndex*)(A->p))[c * 12 + i] = idx;
 			
 			for (int j = i; j < 12; j++) //row
 			{
-				((Int*)(A->i))[idx + j - i] = c * 12 + j;
+				((CholmodIndex*)(A->i))[idx + j - i] = c * 12 + j;
 				((double*)(A->x))[idx + j - i] = blk->at(j, i);
 			}
 		}
@@ -87,7 +88,7 @@ CreateSparseMatrix(BlockedHessianMatrix const&H)
 				{
 					int idx_cur = idx + blk_idx_per_c * 12 + j - i; //idx of the current non-zero element
 
-					((Int*)(A->i))[idx_cur] = r * 12 + j;
+					((CholmodIndex*)(A->i))[idx_cur] = r * 12 + j;
 					((double*)(A->x))[idx_cur] = blk->at(j, i);
 				}
 			}
@@ -98,7 +99,7 @@ CreateSparseMatrix(BlockedHessianMatrix const&H)
 
 	}
 
-	((Int*)(A->p))[para_blk_num*12] = nz_count;
+	((CholmodIndex*)(A->p))[para_blk_num*12] = nz_count;
 
 	return A;
 }
@@ -252,12 +253,12 @@ cholmod_sparse_to_dense(cholmod_sparse* A)
 
 	for (int j = 0; j < col; j++)
 	{
-		int idx_s = ((Int*)(A->p))[j];
-		int idx_e = ((Int*)(A->p))[j + 1];
+		int idx_s = ((CholmodIndex*)(A->p))[j];
+		int idx_e = ((CholmodIndex*)(A->p))[j + 1];
 
 		for (int k = idx_s; k < idx_e; k++)
 		{
-			int i = ((Int*)(A->i))[k];
+			int i = ((CholmodIndex*)(A->i))[k];
 			ret->at<double>(i, j) = ((double*)(A->x))[k];
 		}
 	}
@@ -286,14 +287,14 @@ save_cholmod_sparse_to_ascii(char const* file_name, cholmod_sparse* A)
 	fprintf(fp, "column pointers:\n");
 	for (int i = 0; i <= A->ncol; i++)
 	{
-		fprintf(fp, "%04d\n", ((Int*)(A->p))[i]);
+		fprintf(fp, "%04d\n", ((CholmodIndex*)(A->p))[i]);
 	}
 	fprintf(fp, "\n\n");
 
 	fprintf(fp, "rowIdx, val:\n");
 	for (int i = 0; i < A->nzmax; i++)
 	{
-		fprintf(fp, "%d, %f\n", ((Int*)(A->i))[i], ((double*)(A->x))[i]);
+		fprintf(fp, "%d, %f\n", ((CholmodIndex*)(A->i))[i], ((double*)(A->x))[i]);
 	}
 	fprintf(fp, "\n\n");
 

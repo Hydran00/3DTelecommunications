@@ -2,22 +2,22 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <JSON_DLL>$(PEABODY_DEPENDENCY_DIR)jsoncpp-master\lib\$(Platform)\$(Configuration)\$(DefaultPlatformToolset)\</JSON_DLL>
-    <JSON_DIR>$(PEABODY_DEPENDENCY_DIR)jsoncpp-master\</JSON_DIR>
+    <JSON_DLL>$(PEABODY_DEPENDENCY_DIR)bin\</JSON_DLL>
+    <JSON_DIR>$(PEABODY_DEPENDENCY_DIR)include\</JSON_DIR>
   </PropertyGroup>
   <PropertyGroup>
     <ExecutablePath>$(JSON_DLL);$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(JSON_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(JSON_DIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(JSON_DLL);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>jsoncpp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>echo copy "$(JSON_DLL)\jsoncpp.dll" "$(OutDir)"
+      <Command>echo copy "$(JSON_DLL)jsoncpp.dll" "$(OutDir)"
 copy "$(JSON_DLL)jsoncpp.dll" "$(OutDir)"
 %(Command)</Command>
     </PostBuildEvent>

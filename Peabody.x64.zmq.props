@@ -2,10 +2,10 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <ZMQ_INC_DIR>$(PEABODY_DEPENDENCY_DIR)libzmq\include\</ZMQ_INC_DIR>
-    <ZMQ_LIB_DIR>$(PEABODY_DEPENDENCY_DIR)libzmq\builds\vs\lib\Release</ZMQ_LIB_DIR>
-    <CPPZMQ_INC_DIR>$(PEABODY_DEPENDENCY_DIR)cppzmq\</CPPZMQ_INC_DIR>
-    <ZMQ_BIN_DIR>$(PEABODY_DEPENDENCY_DIR)libzmq\builds\vs\bin\$(Configuration)\</ZMQ_BIN_DIR>
+    <ZMQ_INC_DIR>$(PEABODY_DEPENDENCY_DIR)include\</ZMQ_INC_DIR>
+    <ZMQ_LIB_DIR>$(PEABODY_DEPENDENCY_DIR)lib\</ZMQ_LIB_DIR>
+    <CPPZMQ_INC_DIR>$(PEABODY_DEPENDENCY_DIR)include\</CPPZMQ_INC_DIR>
+    <ZMQ_BIN_DIR>$(PEABODY_DEPENDENCY_DIR)bin\</ZMQ_BIN_DIR>
   </PropertyGroup>
   <PropertyGroup>
     <ExecutablePath>$(ZMQ_LIB_DIR);$(ExecutablePath)</ExecutablePath>
@@ -17,11 +17,11 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(ZMQ_LIB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libzmq-$(DefaultPlatformToolset)-mt-4_3_4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libzmq.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>echo Copying ZMQ DLL
-copy "$(ZMQ_BIN_DIR)libzmq-$(DefaultPlatformToolset)-mt-4_3_4.dll" "$(OutDir)" &gt; nul 2&gt; nul
+copy "$(ZMQ_BIN_DIR)libzmq.dll" "$(OutDir)" &gt; nul 2&gt; nul
 %(Command)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
