@@ -879,7 +879,7 @@ bool VoxelMatrix<T>::save_to_file_ascii(const char* filename)
 			{
 				if (data[count] == -2.0f)
 				{
-					fp << i << " " << j << " " << k << " " << endl;
+					fp << i << " " << j << " " << k << " " << std::endl;
 				}
 				count++;
 			}

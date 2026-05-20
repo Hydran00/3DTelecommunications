@@ -3,7 +3,7 @@
 #ifndef __BLOCKEDHESSIANMATRIX_H__
 #define __BLOCKEDHESSIANMATRIX_H__
 
-#include "opencv2\opencv.hpp"
+#include "opencv2/opencv.hpp"
 #include "UtilMatrix.h"
 
 struct HessianBlock

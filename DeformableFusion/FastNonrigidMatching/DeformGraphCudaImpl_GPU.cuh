@@ -9,9 +9,17 @@
 #include "geometry_types_cuda.h"
 
 #include "utility.h"
+#include "../Common/cuda/PinnedMemory.h"
 
-namespace Fusion4D_GPU{
 #include "DeformGraphCudaImpl.cuh"
+
+namespace Fusion4D_GPU
+{
+#if !defined(FUSION4D_GPU_HAS_CUDA_ALIAS)
+    namespace cuda = ::cuda;
+#define FUSION4D_GPU_HAS_CUDA_ALIAS
+#endif
+    using ::DeformGraphCudaImpl;
 }
 
 #endif

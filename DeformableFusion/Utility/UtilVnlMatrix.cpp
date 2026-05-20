@@ -140,22 +140,22 @@ void permutation_vector( vnl_vector<int> &perm_vec, int num)
 bool loadDepthMatFromPNG( const char* name, vnl_matrix<double> &depthMat, bool bUseMostSignificantBits,
 						  double bias_a, double bias_b )
 {
-	cv::Mat* img = &cv::imread(name, cv::IMREAD_UNCHANGED);
-	if( img == NULL || img->depth() != CV_16UC1)
+	cv::Mat img = cv::imread(name, cv::IMREAD_UNCHANGED);
+	if( img.empty() || img.depth() != CV_16U)
 	{
 		printf("Error<loadDepthMatFromPNG>: file not found or with wrong format(16U only)!\n");
 		return false;
 	}
 
-	int w = img->cols;
-	int h = img->rows;
+	int w = img.cols;
+	int h = img.rows;
 	depthMat.set_size(h, w);	
 
 	for(int i=0; i<h; i++)
 	{
 		for(int j=0; j<w; j++)
 		{
-			unsigned short ori_depth = img->at<unsigned short>(i, j);
+			unsigned short ori_depth = img.at<unsigned short>(i, j);
 			if( bUseMostSignificantBits )
 				depthMat[i][j] = (ori_depth>>3)/10.0;
 			else
@@ -169,7 +169,6 @@ bool loadDepthMatFromPNG( const char* name, vnl_matrix<double> &depthMat, bool b
 		}
 	}
 
-	img->release();
 	return true;
 }
 
@@ -232,20 +231,19 @@ bool saveDepthMatToPNG(const char* name, vnl_matrix<double> const&depthMat, bool
 
 	int w = depthMat.cols();
 	int h = depthMat.rows();
-	cv::Mat* img = &cv::Mat(h, w, CV_16UC1);
+	cv::Mat img(h, w, CV_16UC1);
 	for(int i=0; i<h; i++)
 	{
 		for(int j=0; j<w; j++)
 		{
-			unsigned short ori_depth = unsigned short(depthMat[i][j]*10.0);
+			unsigned short ori_depth = static_cast<unsigned short>(depthMat[i][j]*10.0);
 			if( bUseMostSignificantBits )
-				img->at<unsigned short>(i, j) = ori_depth<<3;
+				img.at<unsigned short>(i, j) = ori_depth<<3;
 			else
-				img->at<unsigned short>(i, j) = ori_depth;
+				img.at<unsigned short>(i, j) = ori_depth;
 		}
 	}
-	cv::imwrite(name, *img);
+	cv::imwrite(name, img);
 
-	img->release();
 	return true;
 }

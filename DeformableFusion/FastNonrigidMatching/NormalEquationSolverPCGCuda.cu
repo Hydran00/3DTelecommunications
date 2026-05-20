@@ -1,3 +1,18 @@
+#include "cuda_math_common.cuh"
+#include "CudaGlobalMemory.h"
+#include "matrix_types_cuda.h"
+#include "../Common/cuda/PinnedMemory.h"
+
+#include "PCGCuda.cuh"
+#include "lmsolver_gpu.h"
+#include "NormalEquationSolverPCGCuda.h"
+#include "Logger.h"
+
+#include <sstream>
+#include <vnl/vnl_vector.h>
+
+using namespace std;
+
 __global__
 void CopyJtFToB_Kernel(float const * __restrict__ dev_jtf, float * __restrict__ dev_b, int * const __restrict__ n)
 {

@@ -122,11 +122,11 @@ void TimingTable::SetMessage(const std::string& key, const std::string& message)
 	time_table[key].message = message;
 }
 
-std::map<std::string, TimingData>::iterator& TimingTable::IterBegin() {
+std::map<std::string, TimingData>::iterator TimingTable::IterBegin() {
 	return time_table.begin();
 }
 
-std::map<std::string, TimingData>::iterator& TimingTable::IterEnd() {
+std::map<std::string, TimingData>::iterator TimingTable::IterEnd() {
 	return time_table.end();
 }
 

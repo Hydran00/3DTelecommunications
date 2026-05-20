@@ -5,8 +5,8 @@
 #define __BASIC_GEOMETRY_H__
 #include "UtilVnlMatrix.h"
 #include "basic_structure.h"
-#include <vpgl\vpgl_perspective_camera.h>
-#include <vgl\algo\vgl_rotation_3d.h>
+#include <vpgl/vpgl_perspective_camera.h>
+#include <vgl/algo/vgl_rotation_3d.h>
 #include "CameraView.h"
 
 #ifndef M_PI
@@ -508,12 +508,12 @@ template<class T>
 vnl_vector_fixed<T, 3> camera_projection(vpgl_perspective_camera<double> const&cam, vnl_vector_fixed<T, 3> const& X)
 {
 	vnl_matrix_fixed<double, 3, 3> R;
-	vnl_vector_fixed<double, 3> T;
-	get_camera_pose(cam, R, T);
+	vnl_vector_fixed<double, 3> trans;
+	get_camera_pose(cam, R, trans);
 	vnl_matrix_fixed<double, 3, 3> K;
 	get_calibration_matrix(cam, K);
 	
-	vnl_vector_fixed<double, 3> ret = K * (R*X + T);
+	vnl_vector_fixed<double, 3> ret = K * (R*X + trans);
 	ret[0] /= ret[2];
 	ret[1] /= ret[2];
 	return ret;

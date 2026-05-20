@@ -8,9 +8,9 @@
 #include <vil/vil_save.h>
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_matrix.hxx>
-#include "opencv2\opencv.hpp"
-#include "opencv2\core.hpp"
-#include "opencv2\highgui.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/highgui.hpp"
 
 template<typename T>
 cv::Mat vnlmatrix_to_cvmat(vnl_matrix<T> const &vnl_mat)

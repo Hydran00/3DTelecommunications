@@ -1,3 +1,28 @@
+#define USING_THRUST
+#ifdef USING_THRUST
+#include <thrust/count.h>
+#include <thrust/device_ptr.h>
+#include <thrust/device_vector.h>
+#include <thrust/for_each.h>
+#include <thrust/iterator/counting_iterator.h>
+#include <thrust/sort.h>
+#include <thrust/system/cpp/execution_policy.h>
+#include <thrust/system/cuda/execution_policy.h>
+#include <thrust/system/omp/execution_policy.h>
+#endif
+
+#include "mc_mesh_processing.cuh"
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include "helper_cuda.h"
+
+#include <algorithm>
+#include <assert.h>
+#include <cfloat>
+#include <cstdint>
+#include <future>
+#include <vector>
+
 namespace McMeshProcessingInternals
 {
 	//

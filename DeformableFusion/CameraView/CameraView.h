@@ -5,8 +5,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "opencv2\opencv.hpp"
-#include "opencv2\highgui.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/highgui.hpp"
 #include <json/json.h>
 
 #ifndef M_PI

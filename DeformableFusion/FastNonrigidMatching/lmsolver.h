@@ -1,7 +1,7 @@
 #ifndef __LMSOLVER_H__
 #define __LMSOLVER_H__
 
-#include <opencv2\opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include <vnl/vnl_vector.h>
 #include "BlockedHessianMatrix.h"
 

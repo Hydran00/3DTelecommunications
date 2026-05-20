@@ -22,7 +22,7 @@
 
 #include "color_map.h"
 
-#include "..\FusionDemo-MultiView\FusionConfig.h"
+#include "../FusionDemo-MultiView/FusionConfig.h"
 
 class CMotionFieldEstimationF2F
 {

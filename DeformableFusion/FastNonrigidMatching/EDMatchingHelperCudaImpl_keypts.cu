@@ -1,13 +1,17 @@
 #ifndef __EDMATCHINGHELPERCUDAIMPL_KEYPTS_CU__
 #define __EDMATCHINGHELPERCUDAIMPL_KEYPTS_CU__
 
+#include "geometry_types_cuda.h"
+#include "cuda_math_common.cuh"
+#include "CudaTextureHandles.h"
+#include "Logger.h"
+#include "EDMatchingHelperCudaImpl.cuh"
 
-__global__
-void calc_key_points_in_reference_kernel(float const* dev_vts, float const* dev_vts_t, int vt_dim, 
-										 int const* __restrict__ dev_depth_maps_proj, int const* __restrict__ dev_depth_maps_corr_vtIdx,
-										 int depth_width_prj, int depth_height_prj,
-										 int depth_width, int depth_height,
-										 ushort3 const* __restrict__ dev_keypts_2d, float3 * __restrict__ dev_keypts_3d, int const* dev_keypts_num)
+__global__ void calc_key_points_in_reference_kernel(float const *dev_vts, float const *dev_vts_t, int vt_dim,
+													int const *__restrict__ dev_depth_maps_proj, int const *__restrict__ dev_depth_maps_corr_vtIdx,
+													int depth_width_prj, int depth_height_prj,
+													int depth_width, int depth_height,
+													ushort3 const *__restrict__ dev_keypts_2d, float3 *__restrict__ dev_keypts_3d, int const *dev_keypts_num)
 {
 	const int keypts_num = *dev_keypts_num;
 	int ptIdx = threadIdx.x + blockDim.x * blockIdx.x;
@@ -17,45 +21,45 @@ void calc_key_points_in_reference_kernel(float const* dev_vts, float const* dev_
 		int vId = pt_2d.x;
 		int u = pt_2d.y;
 		int v = pt_2d.z;
-		int u_proj = MAX(0, MIN(depth_width_prj - 1, ROUND((float)(u) * depth_width_prj / depth_width)));
-		int v_proj = MAX(0, MIN(depth_height_prj - 1, ROUND((float)(v) * depth_height_prj / depth_height)));
-		int d_proj = dev_depth_maps_proj[vId*depth_height_prj*depth_width_prj + v_proj*depth_width_prj + u_proj];
-		int vtIdx = dev_depth_maps_corr_vtIdx[vId*depth_height_prj*depth_width_prj + v_proj*depth_width_prj + u_proj];
+		int u_proj = MAX(0, MIN(depth_width_prj - 1, ROUND((float)(u)*depth_width_prj / depth_width)));
+		int v_proj = MAX(0, MIN(depth_height_prj - 1, ROUND((float)(v)*depth_height_prj / depth_height)));
+		int d_proj = dev_depth_maps_proj[vId * depth_height_prj * depth_width_prj + v_proj * depth_width_prj + u_proj];
+		int vtIdx = dev_depth_maps_corr_vtIdx[vId * depth_height_prj * depth_width_prj + v_proj * depth_width_prj + u_proj];
 
-		unsigned short ds = tex2DLayered(tex_depthImgs, u, v, vId);
+		unsigned short ds = tex2DLayered<unsigned short>(tex_depthImgs, (float)u, (float)v, vId);
 		depth_extract_fg(ds);
 		float3 p_ref = make_float3(0.0f, 0.0f, 0.0f);
 		if (ds > 0 && d_proj > 0 &&
-			abs(ds-d_proj) < 25)// in mm
+			abs(ds - d_proj) < 25) // in mm
 		{
-			float const*v_t_ = dev_vts_t + vtIdx * vt_dim;
+			float const *v_t_ = dev_vts_t + vtIdx * vt_dim;
 			cuda_vector_fixed<float, 3> v_t(v_t_);
 			cuda_vector_fixed<float, 3> n_t(v_t_ + 3);
 
-			//check normal
-			float4 nd_ = tex2DLayered(tex_normalMaps, u, v, vId);
+			// check normal
+			float4 nd_ = tex2DLayered<float4>(tex_normalMaps, (float)u, (float)v, vId);
 			cuda_vector_fixed<float, 3> nd(nd_.x, nd_.y, nd_.z);
 			cuda_vector_fixed<float, 3> nd_t = dev_cam_views[vId].cam_pose.R.transpose_and_multiply(nd);
 			if (dot_product<float, 3>(n_t, nd_t) > NORMAL_CHECK_THRES)
 			{
-				cuda_matrix_fixed<float, 3, 3> const& K = dev_cam_views[vId].K;
+				cuda_matrix_fixed<float, 3, 3> const &K = dev_cam_views[vId].K;
 				float fx = K[0][0];
 				float fy = K[1][1];
 				float cx = K[0][2];
 				float cy = K[1][2];
 				cuda_vector_fixed<float, 3> p;
 				p[2] = ds / 10.0f;
-				p[0] = (u - cx)*p[2] / fx;
-				p[1] = (v - cy)*p[2] / fy;
-				//to world space
+				p[0] = (u - cx) * p[2] / fx;
+				p[1] = (v - cy) * p[2] / fy;
+				// to world space
 				p -= dev_cam_views[vId].cam_pose.T;
 				cuda_vector_fixed<float, 3> p_wld = dev_cam_views[vId].cam_pose.R.transpose_and_multiply(p);
 
-				//find its neighboring vtIdx
-				const int dx[16] = {-1, 1, 0, 0,-2, 2, 0, 0,-3, 3, 0, 0,-4, 4, 0, 0};
-				const int dy[16] = { 0, 0,-1, 1, 0, 0,-2, 2, 0, 0,-3, 3, 0, 0,-4, 4};
+				// find its neighboring vtIdx
+				const int dx[16] = {-1, 1, 0, 0, -2, 2, 0, 0, -3, 3, 0, 0, -4, 4, 0, 0};
+				const int dy[16] = {0, 0, -1, 1, 0, 0, -2, 2, 0, 0, -3, 3, 0, 0, -4, 4};
 				int vtIdx_n = -1;
-				#pragma unroll
+#pragma unroll
 				for (int k = 0; k < 16; k++)
 				{
 					if (vtIdx_n == -1)
@@ -65,11 +69,11 @@ void calc_key_points_in_reference_kernel(float const* dev_vts, float const* dev_
 						if (0 <= u_proj_ && u_proj_ < depth_width_prj &&
 							0 <= v_proj_ && v_proj_ < depth_height_prj)
 						{
-							int vtIdx_ = dev_depth_maps_corr_vtIdx[vId*depth_height_prj*depth_width_prj + v_proj_*depth_width_prj + u_proj_];
+							int vtIdx_ = dev_depth_maps_corr_vtIdx[vId * depth_height_prj * depth_width_prj + v_proj_ * depth_width_prj + u_proj_];
 							if (vtIdx_ >= 0 && vtIdx_ != vtIdx)
 							{
-								int d_proj_ = dev_depth_maps_proj[vId*depth_height_prj*depth_width_prj + v_proj_*depth_width_prj + u_proj_];
-								if(abs(d_proj_ - d_proj) < 5)
+								int d_proj_ = dev_depth_maps_proj[vId * depth_height_prj * depth_width_prj + v_proj_ * depth_width_prj + u_proj_];
+								if (abs(d_proj_ - d_proj) < 5)
 									vtIdx_n = vtIdx_;
 							}
 						}
@@ -78,7 +82,7 @@ void calc_key_points_in_reference_kernel(float const* dev_vts, float const* dev_
 
 				if (vtIdx_n >= 0)
 				{
-					float const*vn_t_ = dev_vts_t + vtIdx_n * vt_dim;
+					float const *vn_t_ = dev_vts_t + vtIdx_n * vt_dim;
 					cuda_vector_fixed<float, 3> vn_t(vn_t_);
 					cuda_vector_fixed<float, 3> dx_t = vn_t - v_t;
 					cuda_vector_fixed<float, 3> dy_t = cross_product(n_t, dx_t);
@@ -91,10 +95,10 @@ void calc_key_points_in_reference_kernel(float const* dev_vts, float const* dev_
 					float s_y = dot_product(dy_t, dpt_vt);
 					float s_z = dot_product(n_t, dpt_vt);
 
-					float const* v_ = dev_vts + vtIdx * vt_dim;
+					float const *v_ = dev_vts + vtIdx * vt_dim;
 					cuda_vector_fixed<float, 3> v(v_);
 					cuda_vector_fixed<float, 3> n(v_ + 3);
-					cuda_vector_fixed<float, 3> vn(dev_vts + vtIdx_n*vt_dim);
+					cuda_vector_fixed<float, 3> vn(dev_vts + vtIdx_n * vt_dim);
 					cuda_vector_fixed<float, 3> dx = vn - v;
 					cuda_vector_fixed<float, 3> dy = cross_product(n, dx);
 					dy.normalize();
@@ -107,7 +111,7 @@ void calc_key_points_in_reference_kernel(float const* dev_vts, float const* dev_
 				}
 				else
 				{
-					float const* v_ = dev_vts + vtIdx * vt_dim;
+					float const *v_ = dev_vts + vtIdx * vt_dim;
 					cuda_vector_fixed<float, 3> v(v_);
 					p_ref.x = v[0];
 					p_ref.y = v[1];
@@ -119,9 +123,8 @@ void calc_key_points_in_reference_kernel(float const* dev_vts, float const* dev_
 	}
 }
 
-__global__
-void calc_key_points_in_curr_kernel(ushort3 const* dev_keypts_2d, float3 *dev_keypts_3d, int const* dev_keypts_num,
-							int depth_width, int depth_height)
+__global__ void calc_key_points_in_curr_kernel(ushort3 const *dev_keypts_2d, float3 *dev_keypts_3d, int const *dev_keypts_num,
+											   int depth_width, int depth_height)
 {
 	const int keypts_num = *dev_keypts_num;
 	int ptIdx = threadIdx.x + blockDim.x * blockIdx.x;
@@ -131,44 +134,44 @@ void calc_key_points_in_curr_kernel(ushort3 const* dev_keypts_2d, float3 *dev_ke
 		int vId = pt_2d.x;
 		int u = pt_2d.y;
 		int v = pt_2d.z;
-		unsigned short ds = tex2DLayered(tex_depthImgs, u, v, vId);
+		unsigned short ds = tex2DLayered<unsigned short>(tex_depthImgs, (float)u, (float)v, vId);
 		depth_extract_fg(ds);
 		float3 pt_3d = make_float3(0.0f, 0.0f, 0.0f);
 		if (ds > 0)
 		{
 			const int radius = 1;
-			const int thres_dif_d = 5; //5mm
+			const int thres_dif_d = 5; // 5mm
 			int d_sum = 0;
 			int count = 0;
 			for (int i = u - radius; i <= u + radius; i++)
-			for (int j = v - radius; j <= v + radius; j++)
-			{
-				if (0 <= i && i < depth_width &&
-					0 <= j && j < depth_height)
+				for (int j = v - radius; j <= v + radius; j++)
 				{
-					unsigned short d = tex2DLayered(tex_depthImgs, i, j, vId);
-					depth_extract_fg(d);
-					if (abs(d - ds) < thres_dif_d)
+					if (0 <= i && i < depth_width &&
+						0 <= j && j < depth_height)
 					{
-						d_sum += d;
-						count++;
+						unsigned short d = tex2DLayered<unsigned short>(tex_depthImgs, (float)i, (float)j, vId);
+						depth_extract_fg(d);
+						if (abs(d - ds) < thres_dif_d)
+						{
+							d_sum += d;
+							count++;
+						}
 					}
 				}
-			}
-			
-			float d_f = d_sum;
-			d_f /= count; //count >=1 
 
-			cuda_matrix_fixed<float, 3, 3> const& K = dev_cam_views[vId].K;
+			float d_f = d_sum;
+			d_f /= count; // count >=1
+
+			cuda_matrix_fixed<float, 3, 3> const &K = dev_cam_views[vId].K;
 			float fx = K[0][0];
 			float fy = K[1][1];
 			float cx = K[0][2];
 			float cy = K[1][2];
 			cuda_vector_fixed<float, 3> p;
 			p[2] = d_f / 10.0f;
-			p[0] = (u - cx)*p[2] / fx;
-			p[1] = (v - cy)*p[2] / fy;
-			//to world space
+			p[0] = (u - cx) * p[2] / fx;
+			p[1] = (v - cy) * p[2] / fy;
+			// to world space
 			p -= dev_cam_views[vId].cam_pose.T;
 			cuda_vector_fixed<float, 3> p_wld = dev_cam_views[vId].cam_pose.R.transpose_and_multiply(p);
 			pt_3d.x = p_wld[0];
@@ -179,44 +182,40 @@ void calc_key_points_in_curr_kernel(ushort3 const* dev_keypts_2d, float3 *dev_ke
 	}
 }
 
-
 void EDMatchingHelperCudaImpl::
-calc_3d_keypts_in_reference(float3* dev_keypts_3d, ushort3 const* dev_keypts_2d,
-							float const* dev_vts, float const* dev_vts_t, int vt_dim,
-							int const* dev_depth_maps_proj, int const* dev_depth_maps_vtIdx,
-							int depth_width_prj, int depth_height_prj)
+	calc_3d_keypts_in_reference(float3 *dev_keypts_3d, ushort3 const *dev_keypts_2d,
+								float const *dev_vts, float const *dev_vts_t, int vt_dim,
+								int const *dev_depth_maps_proj, int const *dev_depth_maps_vtIdx,
+								int depth_width_prj, int depth_height_prj)
 {
 	int threads_per_blk = 256;
 	int blks_per_grid = (keypts_num_gpu_.max_size + threads_per_blk - 1) / threads_per_blk;
-	calc_key_points_in_reference_kernel<<<blks_per_grid, threads_per_blk>>>(dev_vts, dev_vts_t, vt_dim, 
-										dev_depth_maps_proj, dev_depth_maps_vtIdx, 
-										depth_width_prj, depth_height_prj, depth_width_, depth_height_, 
-										dev_keypts_2d, dev_keypts_3d, keypts_num_gpu_.dev_ptr);
+	calc_key_points_in_reference_kernel<<<blks_per_grid, threads_per_blk>>>(dev_vts, dev_vts_t, vt_dim,
+																			dev_depth_maps_proj, dev_depth_maps_vtIdx,
+																			depth_width_prj, depth_height_prj, depth_width_, depth_height_,
+																			dev_keypts_2d, dev_keypts_3d, keypts_num_gpu_.dev_ptr);
 	m_checkCudaErrors();
 }
 void EDMatchingHelperCudaImpl::
-calc_3d_keypts_in_curr(float3* dev_keypts_3d, ushort3 const* dev_keypts_2d)
+	calc_3d_keypts_in_curr(float3 *dev_keypts_3d, ushort3 const *dev_keypts_2d)
 {
 	int threads_per_blk = 256;
 	int blks_per_grid = (keypts_num_gpu_.max_size + threads_per_blk - 1) / threads_per_blk;
 	calc_key_points_in_curr_kernel<<<blks_per_grid, threads_per_blk>>>(dev_keypts_2d, dev_keypts_3d, keypts_num_gpu_.dev_ptr,
-									depth_width_, depth_height_);
+																	   depth_width_, depth_height_);
 	m_checkCudaErrors();
-
 }
 
-
-//one key pt pair per thread
-template<bool bRobustified>
-__global__
-void evaluate_cost_keypts_kernel(float *dev_global_cost_keypts,
-								 float3 const* dev_keypts_p, float3 const* dev_keypts_q, int const* dev_keypts_num, 
-								 int const* dev_ngns_indices_keypts, float const* dev_ngns_weights_keypts,
-								 DeformGraphNodeCuda const* dev_ed_nodes, RigidTransformCuda const* dev_rigid_transf,
-								 float w_keypts, float tau)
+// one key pt pair per thread
+template <bool bRobustified>
+__global__ void evaluate_cost_keypts_kernel(float *dev_global_cost_keypts,
+											float3 const *dev_keypts_p, float3 const *dev_keypts_q, int const *dev_keypts_num,
+											int const *dev_ngns_indices_keypts, float const *dev_ngns_weights_keypts,
+											DeformGraphNodeCuda const *dev_ed_nodes, RigidTransformCuda const *dev_rigid_transf,
+											float w_keypts, float tau)
 {
 	const int keypts_num = *dev_keypts_num;
-	if (blockIdx.x*blockDim.x > keypts_num)
+	if (blockIdx.x * blockDim.x > keypts_num)
 		return;
 
 	__shared__ RigidTransformCuda sh_rigid_transf;
@@ -228,7 +227,7 @@ void evaluate_cost_keypts_kernel(float *dev_global_cost_keypts,
 	}
 	__syncthreads();
 
-	int idx = threadIdx.x + blockIdx.x*blockDim.x;
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	float cost = 0.0f;
 	if (idx < keypts_num)
 	{
@@ -239,12 +238,12 @@ void evaluate_cost_keypts_kernel(float *dev_global_cost_keypts,
 		if ((p[0] != 0.0f || p[1] != 0.0f || p[2] != 0.0f) &&
 			(q[0] != 0.0f || q[1] != 0.0f || q[2] != 0.0f))
 		{
-			int const*ngn_indices = dev_ngns_indices_keypts + NEIGHBOR_EDNODE_NUM*idx;
-			float const*ngn_weights = dev_ngns_weights_keypts + NEIGHBOR_EDNODE_NUM*idx;
+			int const *ngn_indices = dev_ngns_indices_keypts + NEIGHBOR_EDNODE_NUM * idx;
+			float const *ngn_weights = dev_ngns_weights_keypts + NEIGHBOR_EDNODE_NUM * idx;
 
 			cuda_vector_fixed<float, 3> pt(0.0);
 			int bWarpValid = 0;
-			#pragma unroll
+#pragma unroll
 			for (int k = 0; k < NEIGHBOR_EDNODE_NUM; k++)
 			{
 				int ndIdx_k = ngn_indices[k];
@@ -252,19 +251,19 @@ void evaluate_cost_keypts_kernel(float *dev_global_cost_keypts,
 
 				if (ndIdx_k >= 0)
 				{
-					DeformGraphNodeCuda const&nd = dev_ed_nodes[ndIdx_k];
-					cuda_matrix_fixed<float, 3, 3> const&A = nd.A;
-					cuda_vector_fixed<float, 3> const&g = nd.g;
-					cuda_vector_fixed<float, 3> const&t = nd.t;
+					DeformGraphNodeCuda const &nd = dev_ed_nodes[ndIdx_k];
+					cuda_matrix_fixed<float, 3, 3> const &A = nd.A;
+					cuda_vector_fixed<float, 3> const &g = nd.g;
+					cuda_vector_fixed<float, 3> const &t = nd.t;
 
-					pt += w_k*(A*(p - g) + g + t);
+					pt += w_k * (A * (p - g) + g + t);
 					bWarpValid = 1;
 				}
 			}
 
 			if (bWarpValid)
 			{
-				pt = sh_rigid_transf.R*pt + sh_rigid_transf.T;
+				pt = sh_rigid_transf.R * pt + sh_rigid_transf.T;
 
 				float rr = dist_square<3>(pt.data_block(), q.data_block());
 				if (bRobustified)
@@ -291,16 +290,15 @@ void evaluate_cost_keypts_kernel(float *dev_global_cost_keypts,
 	}
 }
 
-//64 threads per cuda block
-//one key pt pair per cuda block
-template<bool bRobustified=false>
-__global__
-void compute_jtj_jtf_keypts_kernel(float * __restrict__ dev_jtjs, float * __restrict__ dev_jtfs, short2 const* __restrict__ dev_jtj_2d_infos,
-								   float3 const* __restrict__ dev_keypts_p, float3 const* __restrict__ dev_keypts_q, int const* __restrict__ dev_keypts_num,
-								   int const* __restrict__ dev_ngns_indices_keypts, float const* __restrict__ dev_ngns_weights_keypts,
-								   DeformGraphNodeCuda const* __restrict__ dev_ed_nodes, int const* dev_ed_nodes_num, 
-								   RigidTransformCuda const* __restrict__ dev_rigid_transf,
-								   float w_keypts, float tau, bool bUseOffDiagJtJ)
+// 64 threads per cuda block
+// one key pt pair per cuda block
+template <bool bRobustified = false>
+__global__ void compute_jtj_jtf_keypts_kernel(float *__restrict__ dev_jtjs, float *__restrict__ dev_jtfs, short2 const *__restrict__ dev_jtj_2d_infos,
+											  float3 const *__restrict__ dev_keypts_p, float3 const *__restrict__ dev_keypts_q, int const *__restrict__ dev_keypts_num,
+											  int const *__restrict__ dev_ngns_indices_keypts, float const *__restrict__ dev_ngns_weights_keypts,
+											  DeformGraphNodeCuda const *__restrict__ dev_ed_nodes, int const *dev_ed_nodes_num,
+											  RigidTransformCuda const *__restrict__ dev_rigid_transf,
+											  float w_keypts, float tau, bool bUseOffDiagJtJ)
 {
 	__shared__ float sh_tmps[NEIGHBOR_EDNODE_NUM][3];
 	__shared__ int sh_ndIds[NEIGHBOR_EDNODE_NUM];
@@ -328,8 +326,8 @@ void compute_jtj_jtf_keypts_kernel(float * __restrict__ dev_jtjs, float * __rest
 				sh_f[threadIdx.x] = 0.0f;
 			__syncthreads();
 
-			int const*ngn_indices = dev_ngns_indices_keypts + NEIGHBOR_EDNODE_NUM*ptIdx;
-			float const*ngn_weights = dev_ngns_weights_keypts + NEIGHBOR_EDNODE_NUM*ptIdx;
+			int const *ngn_indices = dev_ngns_indices_keypts + NEIGHBOR_EDNODE_NUM * ptIdx;
+			float const *ngn_weights = dev_ngns_weights_keypts + NEIGHBOR_EDNODE_NUM * ptIdx;
 			if (threadIdx.x < NEIGHBOR_EDNODE_NUM)
 			{
 				int k = threadIdx.x;
@@ -340,16 +338,16 @@ void compute_jtj_jtf_keypts_kernel(float * __restrict__ dev_jtjs, float * __rest
 
 				if (ndIdx_k >= 0)
 				{
-					DeformGraphNodeCuda const&nd = dev_ed_nodes[ndIdx_k];
-					cuda_matrix_fixed<float, 3, 3> const&A = nd.A;
-					cuda_vector_fixed<float, 3> const&g = nd.g;
-					cuda_vector_fixed<float, 3> const&t = nd.t;
+					DeformGraphNodeCuda const &nd = dev_ed_nodes[ndIdx_k];
+					cuda_matrix_fixed<float, 3, 3> const &A = nd.A;
+					cuda_vector_fixed<float, 3> const &g = nd.g;
+					cuda_vector_fixed<float, 3> const &t = nd.t;
 
-					sh_tmps[k][0] = (p[0] - g[0])*w_k;
-					sh_tmps[k][1] = (p[1] - g[1])*w_k;
-					sh_tmps[k][2] = (p[2] - g[2])*w_k;
+					sh_tmps[k][0] = (p[0] - g[0]) * w_k;
+					sh_tmps[k][1] = (p[1] - g[1]) * w_k;
+					sh_tmps[k][2] = (p[2] - g[2]) * w_k;
 
-					cuda_vector_fixed<float, 3> f_k = w_k*(A*(p - g) + g + t);
+					cuda_vector_fixed<float, 3> f_k = w_k * (A * (p - g) + g + t);
 					atomicAdd(&sh_f[0], f_k[0]);
 					atomicAdd(&sh_f[1], f_k[1]);
 					atomicAdd(&sh_f[2], f_k[2]);
@@ -377,7 +375,7 @@ void compute_jtj_jtf_keypts_kernel(float * __restrict__ dev_jtjs, float * __rest
 			}
 			__syncthreads();
 
-			//compute Js
+			// compute Js
 			for (int id = threadIdx.x; id < NEIGHBOR_EDNODE_NUM * 9; id += blockDim.x)
 			{
 				int k = id / 9;
@@ -410,12 +408,12 @@ void compute_jtj_jtf_keypts_kernel(float * __restrict__ dev_jtjs, float * __rest
 					if (bRobustified)
 						jtf_val *= sh_e;
 
-					atomicAdd(&(p_jtf[i]), jtf_val*w_keypts);
+					atomicAdd(&(p_jtf[i]), jtf_val * w_keypts);
 				}
 			}
-			__syncthreads(); //no need to sync for non-robustified version
+			__syncthreads(); // no need to sync for non-robustified version
 
-			//compute JtJ
+			// compute JtJ
 			int pi, pj, lc_pi, lc_pj;
 			if (bUseOffDiagJtJ)
 			{
@@ -425,13 +423,15 @@ void compute_jtj_jtf_keypts_kernel(float * __restrict__ dev_jtjs, float * __rest
 					for (int j = 0; j <= i; j++)
 					{
 						int ndIdx_j = sh_ndIds[j];
-						if (ndIdx_i > ndIdx_j) {
+						if (ndIdx_i > ndIdx_j)
+						{
 							pi = ndIdx_i;
 							pj = ndIdx_j;
 							lc_pi = i;
 							lc_pj = j;
 						}
-						else {
+						else
+						{
 							pi = ndIdx_j;
 							pj = ndIdx_i;
 							lc_pi = j;
@@ -440,7 +440,7 @@ void compute_jtj_jtf_keypts_kernel(float * __restrict__ dev_jtjs, float * __rest
 
 						if (pj >= 0)
 						{
-							int data_offset = dev_jtj_2d_infos[pi*ed_nodes_num + pj].x * 144;
+							int data_offset = dev_jtj_2d_infos[pi * ed_nodes_num + pj].x * 144;
 							if (data_offset >= 0)
 							{
 								float *p_jtj = dev_jtjs + data_offset;
@@ -449,11 +449,11 @@ void compute_jtj_jtf_keypts_kernel(float * __restrict__ dev_jtjs, float * __rest
 									int r = id / 12;
 									int c = id - 12 * r;
 									float jtj_val = sh_Js[lc_pi][r][0] * sh_Js[lc_pj][c][0] +
-										sh_Js[lc_pi][r][1] * sh_Js[lc_pj][c][1] +
-										sh_Js[lc_pi][r][2] * sh_Js[lc_pj][c][2];
+													sh_Js[lc_pi][r][1] * sh_Js[lc_pj][c][1] +
+													sh_Js[lc_pi][r][2] * sh_Js[lc_pj][c][2];
 
 									if (bRobustified)
-										jtj_val = sh_c*jtj_val + sh_d*sh_JtFs[lc_pi][r] * sh_JtFs[lc_pj][c];
+										jtj_val = sh_c * jtj_val + sh_d * sh_JtFs[lc_pi][r] * sh_JtFs[lc_pj][c];
 
 									atomicAdd(&(p_jtj[id]), jtj_val * w_keypts);
 								}
@@ -474,7 +474,7 @@ void compute_jtj_jtf_keypts_kernel(float * __restrict__ dev_jtjs, float * __rest
 						lc_pi = i;
 						lc_pj = i;
 
-						int data_offset = dev_jtj_2d_infos[pi*ed_nodes_num + pj].x * 144;
+						int data_offset = dev_jtj_2d_infos[pi * ed_nodes_num + pj].x * 144;
 						if (data_offset >= 0)
 						{
 							float *p_jtj = dev_jtjs + data_offset;
@@ -483,17 +483,17 @@ void compute_jtj_jtf_keypts_kernel(float * __restrict__ dev_jtjs, float * __rest
 								int r = id / 12;
 								int c = id - 12 * r;
 								float jtj_val = sh_Js[lc_pi][r][0] * sh_Js[lc_pj][c][0] +
-									sh_Js[lc_pi][r][1] * sh_Js[lc_pj][c][1] +
-									sh_Js[lc_pi][r][2] * sh_Js[lc_pj][c][2];
+												sh_Js[lc_pi][r][1] * sh_Js[lc_pj][c][1] +
+												sh_Js[lc_pi][r][2] * sh_Js[lc_pj][c][2];
 
 								if (bRobustified)
-									jtj_val = sh_c*jtj_val + sh_d*sh_JtFs[lc_pi][r] * sh_JtFs[lc_pj][c];
+									jtj_val = sh_c * jtj_val + sh_d * sh_JtFs[lc_pi][r] * sh_JtFs[lc_pj][c];
 
 								atomicAdd(&(p_jtj[id]), jtj_val * w_keypts);
 							}
 						}
 					}
-				}				
+				}
 			}
 			__syncthreads();
 		}
@@ -501,15 +501,15 @@ void compute_jtj_jtf_keypts_kernel(float * __restrict__ dev_jtjs, float * __rest
 }
 
 void EDMatchingHelperCudaImpl::
-evaluate_cost_keypts(DeformGraphNodeCuda const* dev_ed_nodes, RigidTransformCuda const* dev_rigid_transf, float w_keypts, float *cost)
+	evaluate_cost_keypts(DeformGraphNodeCuda const *dev_ed_nodes, RigidTransformCuda const *dev_rigid_transf, float w_keypts, float *cost)
 {
 	int threads_per_block = MAX_THREADS_PER_BLOCK;
 	int blocks_per_grid = (keypts_num_gpu_.max_size + threads_per_block - 1) / threads_per_block;
 
 	checkCudaErrors(cudaMemsetAsync(dev_global_cost_keypts_, 0, sizeof(int)));
 	evaluate_cost_keypts_kernel<false><<<blocks_per_grid, threads_per_block>>>(dev_global_cost_keypts_, dev_keypts_p_, dev_keypts_q_, keypts_num_gpu_.dev_ptr,
-										dev_ngns_indices_keypts_, dev_ngns_weights_keypts_,
-										dev_ed_nodes, dev_rigid_transf, w_keypts, 1.0);
+																			   dev_ngns_indices_keypts_, dev_ngns_weights_keypts_,
+																			   dev_ed_nodes, dev_rigid_transf, w_keypts, 1.0);
 	m_checkCudaErrors();
 
 	if (cost != NULL)
@@ -517,52 +517,52 @@ evaluate_cost_keypts(DeformGraphNodeCuda const* dev_ed_nodes, RigidTransformCuda
 }
 
 void EDMatchingHelperCudaImpl::
-evaluate_cost_keypts_vRobust(DeformGraphNodeCuda const* dev_ed_nodes, RigidTransformCuda const* dev_rigid_transf, float w_keypts, float tau, float *cost)
+	evaluate_cost_keypts_vRobust(DeformGraphNodeCuda const *dev_ed_nodes, RigidTransformCuda const *dev_rigid_transf, float w_keypts, float tau, float *cost)
 {
 	int threads_per_block = MAX_THREADS_PER_BLOCK;
 	int blocks_per_grid = (keypts_num_gpu_.max_size + threads_per_block - 1) / threads_per_block;
 
 	checkCudaErrors(cudaMemsetAsync(dev_global_cost_keypts_, 0, sizeof(int)));
 	evaluate_cost_keypts_kernel<true><<<blocks_per_grid, threads_per_block>>>(dev_global_cost_keypts_, dev_keypts_p_, dev_keypts_q_, keypts_num_gpu_.dev_ptr,
-										dev_ngns_indices_keypts_, dev_ngns_weights_keypts_,
-										dev_ed_nodes, dev_rigid_transf, w_keypts, tau);
+																			  dev_ngns_indices_keypts_, dev_ngns_weights_keypts_,
+																			  dev_ed_nodes, dev_rigid_transf, w_keypts, tau);
 	m_checkCudaErrors();
 
 	if (cost != NULL)
-		checkCudaErrors(cudaMemcpy(cost, dev_global_cost_keypts_, sizeof(int), cudaMemcpyDeviceToHost));	
+		checkCudaErrors(cudaMemcpy(cost, dev_global_cost_keypts_, sizeof(int), cudaMemcpyDeviceToHost));
 }
 
 void EDMatchingHelperCudaImpl::
-compute_jtj_jtf_keypts(DeformGraphNodeCuda const* dev_ed_nodes, int const* dev_ed_nodes_num, RigidTransformCuda const* dev_rigid_transf, 
-						float w_keypts, bool bEveluateJtJOffDiag)
+	compute_jtj_jtf_keypts(DeformGraphNodeCuda const *dev_ed_nodes, int const *dev_ed_nodes_num, RigidTransformCuda const *dev_rigid_transf,
+						   float w_keypts, bool bEveluateJtJOffDiag)
 {
 	int threads_per_block = 64;
 	int blocks_per_grid = 2048;
-	compute_jtj_jtf_keypts_kernel<false><<<blocks_per_grid, threads_per_block>>>(dev_jtj_, dev_jtf_, dev_jtj_2d_infos_, 
-		dev_keypts_p_, dev_keypts_q_, keypts_num_gpu_.dev_ptr,
-		dev_ngns_indices_keypts_, dev_ngns_weights_keypts_,
-		dev_ed_nodes, dev_ed_nodes_num, dev_rigid_transf, w_keypts, 1.0, bEveluateJtJOffDiag);
+	compute_jtj_jtf_keypts_kernel<false><<<blocks_per_grid, threads_per_block>>>(dev_jtj_, dev_jtf_, dev_jtj_2d_infos_,
+																				 dev_keypts_p_, dev_keypts_q_, keypts_num_gpu_.dev_ptr,
+																				 dev_ngns_indices_keypts_, dev_ngns_weights_keypts_,
+																				 dev_ed_nodes, dev_ed_nodes_num, dev_rigid_transf, w_keypts, 1.0, bEveluateJtJOffDiag);
 	m_checkCudaErrors();
 }
 
 void EDMatchingHelperCudaImpl::
-compute_jtj_jtf_keypts_vRobust(DeformGraphNodeCuda const* dev_ed_nodes, int const* dev_ed_nodes_num, 
-							   RigidTransformCuda const* dev_rigid_transf, float w_keypts, float tau, bool bEveluateJtJOffDiag)
+	compute_jtj_jtf_keypts_vRobust(DeformGraphNodeCuda const *dev_ed_nodes, int const *dev_ed_nodes_num,
+								   RigidTransformCuda const *dev_rigid_transf, float w_keypts, float tau, bool bEveluateJtJOffDiag)
 {
 	int threads_per_block = 64;
 	int blocks_per_grid = 2048;
-	compute_jtj_jtf_keypts_kernel<true><<<blocks_per_grid, threads_per_block>>>(dev_jtj_, dev_jtf_, dev_jtj_2d_infos_, 
-		dev_keypts_p_, dev_keypts_q_, keypts_num_gpu_.dev_ptr,
-		dev_ngns_indices_keypts_, dev_ngns_weights_keypts_,
-		dev_ed_nodes, dev_ed_nodes_num, dev_rigid_transf, w_keypts, tau, bEveluateJtJOffDiag);
+	compute_jtj_jtf_keypts_kernel<true><<<blocks_per_grid, threads_per_block>>>(dev_jtj_, dev_jtf_, dev_jtj_2d_infos_,
+																				dev_keypts_p_, dev_keypts_q_, keypts_num_gpu_.dev_ptr,
+																				dev_ngns_indices_keypts_, dev_ngns_weights_keypts_,
+																				dev_ed_nodes, dev_ed_nodes_num, dev_rigid_transf, w_keypts, tau, bEveluateJtJOffDiag);
 	m_checkCudaErrors();
 }
 
 void EDMatchingHelperCudaImpl::
-compute_ngns_keypts(float sigma_vt_node_dist)
+	compute_ngns_keypts(float sigma_vt_node_dist)
 {
-	graph_cuda_->compute_ngns((float const*)dev_keypts_p_, 3, keypts_num_gpu_,
-		dev_ngns_indices_keypts_, dev_ngns_weights_keypts_, sigma_vt_node_dist);
+	graph_cuda_->compute_ngns((float const *)dev_keypts_p_, 3, keypts_num_gpu_,
+							  dev_ngns_indices_keypts_, dev_ngns_weights_keypts_, sigma_vt_node_dist);
 }
 
 void EDMatchingHelperCudaImpl::setup_keypts(float sigma_vt_node_dist)
@@ -570,26 +570,19 @@ void EDMatchingHelperCudaImpl::setup_keypts(float sigma_vt_node_dist)
 	compute_ngns_keypts(sigma_vt_node_dist);
 }
 
-
 void EDMatchingHelperCudaImpl::allocate_mem_for_keypts_matching(int keypts_num_max)
 {
 	checkCudaErrors(cudaMalloc(&(keypts_num_gpu_.dev_ptr), sizeof(int)));
 	checkCudaErrors(cudaMemset(keypts_num_gpu_.dev_ptr, 0, sizeof(int)));
 	keypts_num_gpu_.max_size = keypts_num_max;
 
-	checkCudaErrors(cudaMalloc(&(dev_keypts_p_), sizeof(float3)*keypts_num_max));
-	checkCudaErrors(cudaMalloc(&(dev_keypts_q_), sizeof(float3)*keypts_num_max));
-	checkCudaErrors(cudaMalloc(&(dev_keypts_2d_p_), sizeof(ushort3)*keypts_num_max));
-	checkCudaErrors(cudaMalloc(&(dev_keypts_2d_q_), sizeof(ushort3)*keypts_num_max));
+	checkCudaErrors(cudaMalloc(&(dev_keypts_p_), sizeof(float3) * keypts_num_max));
+	checkCudaErrors(cudaMalloc(&(dev_keypts_q_), sizeof(float3) * keypts_num_max));
+	checkCudaErrors(cudaMalloc(&(dev_keypts_2d_p_), sizeof(ushort3) * keypts_num_max));
+	checkCudaErrors(cudaMalloc(&(dev_keypts_2d_q_), sizeof(ushort3) * keypts_num_max));
 
-	checkCudaErrors(cudaMalloc(&(dev_ngns_indices_keypts_), sizeof(int)*keypts_num_max*NEIGHBOR_EDNODE_NUM));
-	checkCudaErrors(cudaMalloc(&(dev_ngns_weights_keypts_), sizeof(float)*keypts_num_max*NEIGHBOR_EDNODE_NUM));
+	checkCudaErrors(cudaMalloc(&(dev_ngns_indices_keypts_), sizeof(int) * keypts_num_max * NEIGHBOR_EDNODE_NUM));
+	checkCudaErrors(cudaMalloc(&(dev_ngns_weights_keypts_), sizeof(float) * keypts_num_max * NEIGHBOR_EDNODE_NUM));
 }
-
-
-
-
-
-
 
 #endif

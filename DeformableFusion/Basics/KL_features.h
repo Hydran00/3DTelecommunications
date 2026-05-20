@@ -4,8 +4,8 @@
 #define __KL_FEATURES_H__
 #include "UtilMatrix.h"
 #include "UtilVnlMatrix.h"
-#include "opencv2\opencv.hpp"
-#include "opencv2\highgui.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/highgui.hpp"
 
 #define MAX_CORNER_NUMBER 800
 
@@ -32,17 +32,6 @@ bool track_corner_points(cv::Mat const& img_prev, vnl_matrix<double> const &corn
 						 vnl_matrix<double> &matched_corners,
 						 int search_radius=20,
 						 bool bhistEqual = false);
-template <class T> bool drawCornersOnImage(cv::Mat& img, vnl_matrix<T> const& corners, cv::Scalar color);
-template <class T> bool drawCornersOnImage(cv::Mat& img, vector< vnl_vector_fixed<T, 2> > const& corners, cv::Scalar color);
-template<class T> bool drawCornersOnImageAndSave(cv::Mat& img,
-	vnl_matrix<T> const& corners,
-	char const* filename,
-	cv::Scalar color);
-template<class T>
-bool drawCornersOnImageAndSave(cv::Mat& img,
-	vector< vnl_vector_fixed<T, 2> > const& corners,
-	char const* filename,
-	cv::Scalar color);
 template<class T>
 bool drawMatchedCornersOnImages(cv::Mat const& img_1, cv::Mat const& img_2, vnl_matrix<T>& matched_corners,
 	const char* filename);

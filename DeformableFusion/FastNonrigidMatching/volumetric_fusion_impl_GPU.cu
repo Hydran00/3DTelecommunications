@@ -5,7 +5,7 @@
 #include <thrust/sort.h>
 #include <thrust/device_vector.h>
 #include <thrust/system/cuda/execution_policy.h>
-#include <thrust/system/omp/execution_policy.h> 
+#include <thrust/system/omp/execution_policy.h>
 #include <thrust/system/cpp/execution_policy.h>
 #endif
 
@@ -25,7 +25,12 @@
 #include <future>
 #include <assert.h>
 
-namespace Fusion4D_GPU{
+namespace Fusion4D_GPU
+{
+#if !defined(FUSION4D_GPU_HAS_CUDA_ALIAS)
+    namespace cuda = ::cuda;
+#define FUSION4D_GPU_HAS_CUDA_ALIAS
+#endif
 #include "volumetric_fusion_impl.cu"
 #include "volumetric_fusion_marchingcubes.cu"
 #include "volumetric_fusion_marchingcubes_vMesh.cu"

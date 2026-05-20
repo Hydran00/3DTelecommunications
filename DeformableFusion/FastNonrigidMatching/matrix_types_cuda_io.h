@@ -2,7 +2,7 @@
 #define __MATRIX_TYPES_CUDA_IO_H__
 
 #include "matrix_types_cuda.h"
-#include "opencv2\opencv.hpp"
+#include "opencv2/opencv.hpp"
 #include "UtilMatrix.h"
 #include "helper_cuda.h"
 #include "BlockedHessianMatrix.h"

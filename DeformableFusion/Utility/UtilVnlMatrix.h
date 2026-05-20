@@ -35,8 +35,8 @@
 
 #include <math.h>
 #include "UtilMatrix.h"
-#include "opencv2\opencv.hpp"
-#include "opencv2\highgui.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/highgui.hpp"
 #include "CDepthBias.h"
 
 template <class T>
@@ -93,9 +93,9 @@ bool loadDataBlock(const char* filename, T* data_block, int &size);
 template<class T>
 bool saveVnlVectorSetASCAII(const char* filename, vector< vnl_vector<T> > const&vecs);
 
-template<class T, int N>
+template<class T, unsigned int N>
 bool saveVnlVectorSetASCAII(const char* filename, vector< vnl_vector_fixed<T, N> > const&vecs);
-template<class T, int N>
+template<class T, unsigned int N>
 bool loadVnlVectorSetASCAII(const char* filename, vector< vnl_vector_fixed<T, N> > &vecs);
 
 /* assume that the unit of each depth value in PGN is milimeter, while the value in vnl_matrix is in centimeter

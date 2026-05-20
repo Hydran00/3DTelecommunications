@@ -1,3 +1,6 @@
+#ifndef NORMAL_EQUATION_SOLVER_PCG_CUDA_H
+#define NORMAL_EQUATION_SOLVER_PCG_CUDA_H
+
 class NormalEquationSolverPCGCuda : public NormalEquationSolverGPU, public CudaGlobalMemoryStatic
 {
 public:
@@ -45,3 +48,5 @@ private:
 
 	float* dev_global_predicted_cost_decrease_;
 };
+
+#endif

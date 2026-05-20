@@ -5,8 +5,8 @@
 #define __SURFACE_MISC_H__
 #include <stdio.h>
 #include <string.h>
-#include "opencv2\opencv.hpp"
-#include "opencv2\highgui.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/highgui.hpp"
 #include "CameraView.h"
 #include "CSurface.h"
 #include <vector>

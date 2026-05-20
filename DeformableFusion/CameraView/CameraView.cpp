@@ -5,9 +5,9 @@
 #include "UtilMatrix.h"
 #include "VecOperation.h"
 #include <math.h>
-#include "opencv2\opencv.hpp"
-#include "opencv2\highgui.hpp"
-#include "opencv2\calib3d.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/calib3d.hpp"
 
 bool ValidateParameterList(const Json::Value & json, const char* keys[], size_t nkeys) {
 

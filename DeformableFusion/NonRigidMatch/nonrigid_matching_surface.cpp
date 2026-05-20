@@ -384,10 +384,11 @@ bool generate_reverse_deform_graph( DeformGraph const& graph,
 		para.vt_sdf_downsample_rate = 1;
 		para.pt_constr_thres = 20.0;
 		para.w_weights_smooth = 0.5;
-		affine_set_nonrigid_pw_opt(surface_dst, &graph_r, &ngns_dst, NULL, vector<cv::Mat>(), vector<GCameraView*>(), match_set, vector<double>(), para, NULL);
+		vector<double> edge_alphas;
+		affine_set_nonrigid_pw_opt(surface_dst, &graph_r, &ngns_dst, NULL, vector<cv::Mat>(), vector<GCameraView*>(), match_set, edge_alphas, para, NULL);
 		para.pt_constr_thres = 2.0; 
 		para.w_weights_smooth = 0.2;
-		affine_set_nonrigid_pw_opt(surface_dst, &graph_r, &ngns_dst, NULL, vector<cv::Mat>(), vector<GCameraView*>(), match_set, vector<double>(), para, NULL);
+		affine_set_nonrigid_pw_opt(surface_dst, &graph_r, &ngns_dst, NULL, vector<cv::Mat>(), vector<GCameraView*>(), match_set, edge_alphas, para, NULL);
 	}
 
 	return true;
@@ -618,7 +619,8 @@ void deform_graph_from_graph_chain( CSurface<float> const& surface_1st,
 			nd.g = nd.g + nd.t;
 		}
 
-		deform_grpah_initialization_Geodesic(*graph_tmp, *(graphs[i + 1]), surface_t);
+		CGeodesicDistanceOnSurface geo_dist_t(surface_t);
+		deform_grpah_initialization_Geodesic(*graph_tmp, *(graphs[i + 1]), surface_t, geo_dist_t);
 		graphs_with_same_nodes.push_back(graph_tmp);
 	}
 
@@ -1349,7 +1351,7 @@ void transform_ddf_with_DeformGraph( DDF const&ddf, DDF &ddf_dst,
 				}
 				else
 				{
-					throw exception("unsupported SDF Transformation Type!");
+					throw std::runtime_error("unsupported SDF Transformation Type!");
 				}				
 
 			}//end of for-i

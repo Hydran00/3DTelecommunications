@@ -7,6 +7,8 @@
 #include "device_launch_parameters.h"
 #include "cuda_math_common.cuh"
 
+#include <cassert>
+
 #include "cuda_vector_fixed.cuh"
 
 template <class T, unsigned int num_rows, unsigned int num_cols>
@@ -147,8 +149,8 @@ public:
 		assert(num_rows == num_cols); // cannot inplace_transpose non-square fixed size matrix
 #endif
 
-		for (unsigned i = 0; i < nrows; ++i)
-		for (unsigned j = i + 1; j < ncols; ++j)
+		for (unsigned i = 0; i < num_rows; ++i)
+		for (unsigned j = i + 1; j < num_cols; ++j)
 		{
 			T t = this->data_[i][j];
 			this->data_[i][j] = this->data_[j][i];

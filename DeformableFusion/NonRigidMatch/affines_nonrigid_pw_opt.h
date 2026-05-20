@@ -12,7 +12,7 @@
 #include "surface_geodesic_distance.h"
 #undef NDEBUG
 #include <assert.h>
-#include "ceres\ceres.h"
+#include "ceres/ceres.h"
 using namespace ceres;
 
 namespace NonrigidMatching{

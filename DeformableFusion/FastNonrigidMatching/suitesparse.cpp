@@ -208,7 +208,7 @@ bool SuiteSparse::Cholesky(cholmod_sparse* A, cholmod_factor* L)
 cholmod_dense* SuiteSparse::CreateDenseVector(const double* x, int in_size, int out_size) 
 {
 	if (in_size > out_size)
-		return false;
+		return nullptr;
 
 	cholmod_dense* v = cholmod_zeros(out_size, 1, CHOLMOD_REAL, &cc_);
 	if (x != NULL) {

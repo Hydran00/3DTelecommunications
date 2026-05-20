@@ -1,3 +1,12 @@
+#include "cuda_math_common.cuh"
+#include "CudaGlobalMemory.h"
+#include "matrix_types_cuda.h"
+#include "../Common/cuda/PinnedMemory.h"
+
+#include "PCGCuda.cuh"
+#include "fast_pcg.cuh"
+#include "Logger.h"
+
 const int CUDA_MAX_NUM_THREADS = 1024;
 const int CUDA_WARP_SIZE = 32;
 const int LOG_CUDA_WARP_SIZE = 5;
@@ -920,4 +929,3 @@ void PCGCuda::solve_test(BlockMatrixFullCR const&blk_mat_bscr, float const* dev_
 	PCGSover_Sam::fast_pcg pcg(para_blk_num * 12, 12);
 	pcg.bsr_solve(blk_mat_bscr.blks_num.debug_sync_read(LOGGER()->check_verbosity(Logger::Trace)), blk_mat_bscr.data, blk_mat_bscr.brow_ptr, blk_mat_bscr.bcolind, dev_b, dev_x, 10);
 }
-

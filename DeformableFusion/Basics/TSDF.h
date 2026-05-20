@@ -90,10 +90,10 @@ public:
 	 * voxels in the front of the surface have postive vals, while voxels behind surface have 
 	 * negative values.
 	 */
-	bool TSDF::add_a_frame_occupancy(cv::Mat const& depthMat, GCameraView *cam_d, cv::Mat const& img, GCameraView *cam_clr);
+	bool add_a_frame_occupancy(cv::Mat const& depthMat, GCameraView *cam_d, cv::Mat const& img, GCameraView *cam_clr);
 
-	virtual bool add_a_frame(vnl_matrix<double> &depthMat, vpgl_perspective_camera<double> &cam_pose, cv::Mat& img = cv::Mat() );
-	virtual bool add_a_frame(cv::Mat& depthMat, GCameraView *cam, cv::Mat& img = cv::Mat());
+	virtual bool add_a_frame(vnl_matrix<double> &depthMat, vpgl_perspective_camera<double> &cam_pose, cv::Mat const& img = cv::Mat() );
+	virtual bool add_a_frame(cv::Mat& depthMat, GCameraView *cam, cv::Mat const& img = cv::Mat());
 	
 	//find the closest vertex for each voxel
 	virtual bool add_a_frame2(vnl_matrix<double> &depthMat, vpgl_perspective_camera<double> &cam_pose);

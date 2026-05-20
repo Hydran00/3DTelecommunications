@@ -35,7 +35,7 @@ float4 BPSVals[] = {
 	{ 9.0f, 8.0f, 8.0f, 8.0f }
 };
 
-float mydot(float2& a, float2& b)
+float mydot(float2 const& a, float2 const& b)
 {
 	return a.x*b.x + a.y*b.y;
 }
@@ -203,7 +203,7 @@ TSDF::TSDF( BoundingBox3D bbox,
 				mu_, bDynamicMu_, bDynamicWeight_, bBuildColorField_);	
 }
 
-bool TSDF::add_a_frame(cv::Mat& depthMat, GCameraView *cam, cv::Mat& img)
+bool TSDF::add_a_frame(cv::Mat& depthMat, GCameraView *cam, cv::Mat const& img)
 {
 	if( depthMat.empty() || cam == NULL )
 		return false;
@@ -344,7 +344,7 @@ bool TSDF::add_a_frame_occupancy(cv::Mat const& depthMat, GCameraView *cam_d, cv
 	return true;
 }
 
-bool TSDF::add_a_frame(vnl_matrix<double> &depthMat, vpgl_perspective_camera<double> &cam,  cv::Mat& img)
+bool TSDF::add_a_frame(vnl_matrix<double> &depthMat, vpgl_perspective_camera<double> &cam,  cv::Mat const& img)
 {
 	vnl_matrix_fixed<double, 3, 3> K = cam.get_calibration().get_matrix();
 	double fx = K[0][0];

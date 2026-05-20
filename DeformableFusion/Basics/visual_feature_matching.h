@@ -60,7 +60,7 @@ public:
 	{;}
 
 public:
-	double get_residual(vgl_point_2d<double> &pr, vgl_point_2d<double> &pl)
+	double get_residual(const vgl_point_2d<double> &pr, const vgl_point_2d<double> &pl)
 	{
 	/*	vgl_homg_line_2d<double> line_l = this->l_epipolar_line(vgl_homg_point_2d<double>(pr));
 		vgl_homg_line_2d<double> line_r = this->r_epipolar_line(vgl_homg_point_2d<double>(pl));
@@ -74,7 +74,7 @@ public:
 		double res = std::abs(dot_product( p_lf, line_lf));
 		return 0.5*(res/std::sqrt(line_lf(0)*line_lf(0)+line_lf(1)*line_lf(1))+res/std::sqrt(line_rt(0)*line_rt(0)+line_rt(1)*line_rt(1)));
 	}
-	double get_residual(vnl_vector_fixed<double, 2> &pr, vnl_vector_fixed<double, 2> &pl)
+	double get_residual(const vnl_vector_fixed<double, 2> &pr, const vnl_vector_fixed<double, 2> &pl)
 	{
 		return get_residual( vgl_point_2d<double>(pr.data_block()), vgl_point_2d<double>(pl.data_block()));
 	}

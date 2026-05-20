@@ -4,6 +4,10 @@
  * Mingsong Dou(doums@cs.unc.edu)
  ******************************************************************************/
 
+#ifndef RANDOM
+#define RANDOM (fabs(((double)rand())/RAND_MAX))
+#endif
+
 template<class T>
 void VecOperation<T>::printVec(T *vec, int len, int direct)
 {

@@ -1,3 +1,11 @@
+#ifndef __EDMATCHINGHELPERCUDAIMPL_REGTERM_CU__
+#define __EDMATCHINGHELPERCUDAIMPL_REGTERM_CU__
+
+#include "geometry_types_cuda.h"
+#include "cuda_math_common.cuh"
+#include "Logger.h"
+#include "EDMatchingHelperCudaImpl.cuh"
+
 //helper double based atomicAdd
 __device__ double atomicAddDoubleREG(double* address, double val)
 {
@@ -1181,3 +1189,4 @@ evaluate_cost_reg_vRobust(DeformGraphNodeCuda *dev_ed_nodes, DeformGraphNodeCore
 	}
 }
 
+#endif // __EDMATCHINGHELPERCUDAIMPL_REGTERM_CU__

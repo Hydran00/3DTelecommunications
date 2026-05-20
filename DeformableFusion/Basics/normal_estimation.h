@@ -3,9 +3,9 @@
 #ifndef __NORMAL_ESTIMATION_H__
 #define __NORMAL_ESTIMATION_H__
 #include "basic_geometry.h"
-#include <vil\vil_image_view.h>
-#include <vil\vil_save.h>
-#include <vil\vil_load.h>
+#include <vil/vil_image_view.h>
+#include <vil/vil_save.h>
+#include <vil/vil_load.h>
 
 ///**********Local Plane Fitting or Normal Estimation for the depth map************************
 /* calculate the point coordinate and point normal in the camera space

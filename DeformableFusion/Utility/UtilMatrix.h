@@ -4,8 +4,8 @@
 //===============================================
 #ifndef __MYMATRIX_H__
 #define __MYMATRIX_H__
-#include "opencv2\opencv.hpp"
-#include "opencv2\calib3d.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/calib3d.hpp"
 #include <iostream>
 #include <fstream>
 #include <vector>

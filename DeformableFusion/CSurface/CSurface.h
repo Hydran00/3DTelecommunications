@@ -8,6 +8,8 @@
 #ifdef USING_GLMOBJ
 #include "glm.h"
 #endif
+#include <map>
+#include <utility>
 #include <vector>
 #include "CIsoSurface.h"
 #include "BoundingBox3D.h"
@@ -77,7 +79,7 @@ public:
 	{
 		if (vtIdx_1 == vtIdx_2)
 			return -1;
-		std::pair<int, int> vt_pair = (vtIdx_1 < vtIdx_2) ? make_pair(vtIdx_1, vtIdx_2) : make_pair(vtIdx_2, vtIdx_1);
+		std::pair<int, int> vt_pair = (vtIdx_1 < vtIdx_2) ? std::make_pair(vtIdx_1, vtIdx_2) : std::make_pair(vtIdx_2, vtIdx_1);
 		std::map<std::pair<int, int>, int>::const_iterator iter = edges_map.find(vt_pair);
 		if (iter != edges_map.end())
 			return iter->second;
@@ -121,7 +123,7 @@ public:
 
 	bool copy_texture_from_other( CSurface<T> const& other);
 
-	bool CSurface<T>::create_and_init_colors_of_view(int viewNum, bool bInitAsVertexColor=true);
+	bool create_and_init_colors_of_view(int viewNum, bool bInitAsVertexColor=true);
 
 	void reset_clr()
 	{
@@ -156,7 +158,7 @@ public:
 		if( !this->haveColorInfo() )
 			return;
 		
-		vector<bool> bFlags(this->vtNum);
+		std::vector<bool> bFlags(this->vtNum);
 		for(int i=0; i<this->vtNum; i++)
 		{
 			T* clr = this->vt_color(i);
@@ -211,7 +213,7 @@ public:
 	// delete the vertices that are not used in triangles, the order of vertices is preserved
 	std::vector<bool> bExtra;//indicate whether a vertex is indexed by triangles (TRUE: NOT indexed)
 	void build_bExtra();
-	void delete_extra_vertice(std::vector<int> &LUT_new2Old = std::vector<int>());
+	void delete_extra_vertice(std::vector<int> *LUT_new2Old = nullptr);
 
 	bool haveColorInfo() const {return color;}
 	bool haveNormalInfo() const {return normal;}

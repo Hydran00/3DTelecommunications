@@ -1,3 +1,6 @@
+#ifndef PCGCUDA_CUH
+#define PCGCUDA_CUH
+
 class PCGCuda : public CudaGlobalMemoryStatic
 {
 public:
@@ -54,3 +57,5 @@ public:
 																	BlockMatrixFullCR &blk_mat_bscr);
 	static bool HessianBlockMatrix_to_BlockMatrixFullCR_CopyData(float const*dev_hessian_data, BlockMatrixFullCR &blk_mat_bscr);
 };
+
+#endif

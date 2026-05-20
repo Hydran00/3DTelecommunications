@@ -1,0 +1,11 @@
+[  4%] Built target LibUtility
+[ 15%] Built target Utility
+[ 17%] Built target CameraView
+[ 22%] Built target CSurface
+[ 37%] Built target Basics
+[ 47%] Built target NonRigidMatch
+[ 48%] Building CXX object CMakeFiles/FastNonrigidMatching.dir/DeformableFusion/FastNonrigidMatching/CMotionFieldEstimationF2F.cpp.o
+gmake[3]: *** [CMakeFiles/FastNonrigidMatching.dir/build.make:79: CMakeFiles/FastNonrigidMatching.dir/DeformableFusion/FastNonrigidMatching/CMotionFieldEstimationF2F.cpp.o] Interrupt
+gmake[2]: *** [CMakeFiles/Makefile2:315: CMakeFiles/FastNonrigidMatching.dir/all] Interrupt
+gmake[1]: *** [CMakeFiles/Makefile2:360: CMakeFiles/OfflineFolderFusion.dir/rule] Interrupt
+gmake: *** [Makefile:260: OfflineFolderFusion] Interrupt

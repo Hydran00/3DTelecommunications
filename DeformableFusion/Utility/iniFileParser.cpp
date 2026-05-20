@@ -6,7 +6,7 @@
  * 
  ***********************************************************/
 #include "iniFileParser.h"
-#include "Utility.h"
+#include "utility.h"
 #include <math.h>
 #include <stdlib.h>
 #include <vector>

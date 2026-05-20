@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 #pragma once
 
-#include <opencv2\opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include <UtilMatrix.h>
 #include "utility.h"
 #include "basic_geometry.h"

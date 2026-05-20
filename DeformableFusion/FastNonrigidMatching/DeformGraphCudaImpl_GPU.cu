@@ -7,6 +7,7 @@
 #include "../Common/cuda/PinnedMemory.h"
 #include "../Common/cuda/CudaHelpers.h"
 
-namespace Fusion4D_GPU{
+// Include implementation at global scope so method definitions match the
+// class declared in DeformGraphCudaImpl.cuh. The GPU header exposes a
+// `using ::DeformGraphCudaImpl;` into `Fusion4D_GPU` for namespaced access.
 #include "DeformGraphCudaImpl.cu"
-}

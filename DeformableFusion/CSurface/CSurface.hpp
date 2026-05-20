@@ -568,7 +568,7 @@ int CSurface<T>::readFromFileASCII(const char* filename)
 																&tmp[3], &tmp[4], &tmp[5],
 																&tmp[6], &tmp[7], &tmp[8]);
 		else
-			throw exception("Dim is not 3, 6, or 9!");
+			throw std::runtime_error("Dim is not 3, 6, or 9!");
 
 		for(int j=0; j<vtDim; j++)
 			vtData[vtDim*i+j] = (T)tmp[j];
@@ -1660,7 +1660,7 @@ void CSurface<T>::build_bExtra()
 }
 
 template <class T>
-void CSurface<T>::delete_extra_vertice(vector<int> &LUT_new2Old)
+void CSurface<T>::delete_extra_vertice(vector<int> *LUT_new2Old)
 {
 	vector<int> bFlag(this->vtNum);
 	for(int i=0; i<this->vtNum; i++)
@@ -1678,13 +1678,15 @@ void CSurface<T>::delete_extra_vertice(vector<int> &LUT_new2Old)
 		idx_LUT[i] = -1;
 
 	int count = 0;
-	LUT_new2Old.clear();
+	if (LUT_new2Old != nullptr)
+		LUT_new2Old->clear();
 	for(int i=0; i<this->vtNum; i++)
 	{
 		if( bFlag[i] )
 		{
 			idx_LUT[i] = count;
-			LUT_new2Old.push_back(i);
+			if (LUT_new2Old != nullptr)
+				LUT_new2Old->push_back(i);
 			count++;
 		}
 	}

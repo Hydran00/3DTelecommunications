@@ -99,7 +99,7 @@ bool force_graph_on_surface( DeformGraph const&graph, DeformGraph &graph_new, CS
 //the associated surface MUST be "surface", because this function will not clear old association
 bool deform_grpah_initialization_Geodesic( DeformGraph &graph, DeformGraph const& graph_prev, 
 										   CSurface<float> const&surface,
-										   CGeodesicDistanceOnSurface &geo_dist = CGeodesicDistanceOnSurface());
+										   CGeodesicDistanceOnSurface &geo_dist);
 
 
 // graphs: <in> the deformation graphs in the list will deform surface_1st consecutively from 1st to last

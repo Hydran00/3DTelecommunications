@@ -1,3 +1,10 @@
+#ifndef MC_MESH_PROCESSING_CUH
+#define MC_MESH_PROCESSING_CUH
+
+#ifndef __forceinline
+#define __forceinline inline __attribute__((always_inline))
+#endif
+
 // Set to 1 to enable profiling instrumentation (the PERF_SCOPE macro).
 
 //
@@ -99,3 +106,5 @@ struct McMeshProcessing
 	char* mPinnedInds;
 	char* mPinnedVerts;
 };
+
+#endif

@@ -3,7 +3,7 @@
 #include "UtilMatrix.h"
 #include "VecOperation.h"
 #include "math.h"
-#include "opencv2\highgui.hpp"
+#include "opencv2/highgui.hpp"
 
 bool MorphErodeOper(cv::Mat& bImg, int diameter)
 {

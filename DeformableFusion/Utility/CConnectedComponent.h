@@ -6,8 +6,8 @@
 
 #ifndef __CCONNECTEDCOMPONENT_H__
 #define __CCONNECTEDCOMPONENT_H__
-#include "opencv2\opencv.hpp"
-#include "opencv2\core.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/core.hpp"
 #include <vector>
 using namespace std;
 

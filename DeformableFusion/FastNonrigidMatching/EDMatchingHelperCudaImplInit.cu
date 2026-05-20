@@ -2,31 +2,37 @@
 #define __EDMATCHINGHELPERCUDAIMPLINIT_CU__
 
 #define THREADS_PER_BLOCK 1024
-#define DIAGONALJTJBLKS_PER_CUDA_BLOCK (1024*3)
-#define OFFDIAGONALBLKS_PER_CUDA_BLOCK (1024*11)
-#define CHUNK_SIZE 1536 //how many points info to load each time, related to shared memory buffer size
+#define DIAGONALJTJBLKS_PER_CUDA_BLOCK (1024 * 3)
+#define OFFDIAGONALBLKS_PER_CUDA_BLOCK (1024 * 11)
+#define CHUNK_SIZE 1536 // how many points info to load each time, related to shared memory buffer size
 
-texture<short, cudaTextureType3D, cudaReadModeElementType> tex_ndIds;
+// texture object (CUDA 12+)
+static cudaTextureObject_t tex_ndIds = 0;
+#include "CudaTextureHandles.h"
 
-__device__ int dev_globalPos; //count of jtj blocks (diagonal only)
+// Required headers for types and macros used in this translation unit
+#include "geometry_types_cuda.h"
+#include "cuda_math_common.cuh"
+#include "Logger.h"
+#include "EDMatchingHelperCudaImpl.cuh"
+
+__device__ int dev_globalPos; // count of jtj blocks (diagonal only)
 __device__ int dev_globalOffset;
 
 __device__ int dev_globalOffset2;
 
 __device__ int dev_globalRegCount;
 
-//each thread handle one node
-//for each nodes, find its k nearest neighbors, and flag corresponding row of dev_jtj_2d_infos
-__global__ 
-void FindEDNodesNeighbors_Kernel(short2 *dev_jtj_2d_infos,
-								DeformGraphNodeCuda *dev_ed_nodes, int ed_nodes_num,
-								int3 ed_cubes_dims,
-								float3 ed_cubes_offsets,
-								float ed_cube_res,
-								float nodes_min_dist
-								)
+// each thread handle one node
+// for each nodes, find its k nearest neighbors, and flag corresponding row of dev_jtj_2d_infos
+__global__ void FindEDNodesNeighbors_Kernel(short2 *dev_jtj_2d_infos,
+											DeformGraphNodeCuda *dev_ed_nodes, int ed_nodes_num,
+											int3 ed_cubes_dims,
+											float3 ed_cubes_offsets,
+											float ed_cube_res,
+											float nodes_min_dist)
 {
-	int ndId = threadIdx.x + blockDim.x*blockIdx.x;
+	int ndId = threadIdx.x + blockDim.x * blockIdx.x;
 	if (ndId < ed_nodes_num)
 	{
 		cuda_vector_fixed<float, 3> g = dev_ed_nodes[ndId].g;
@@ -43,51 +49,51 @@ void FindEDNodesNeighbors_Kernel(short2 *dev_jtj_2d_infos,
 		}
 
 		for (int i = -2; i <= 2; i++)
-		for (int j = -2; j <= 2; j++)
-		for (int k = -2; k <= 2; k++)
-		{
-			int xId = xCubeId + i;
-			int yId = yCubeId + j;
-			int zId = zCubeId + k;
-
-			if (xId >= 0 && yId >= 0 && zId >= 0 &&
-				xId < ed_cubes_dims.x && yId < ed_cubes_dims.y && zId < ed_cubes_dims.z)
-			{
-				short ndId2 = tex3D(tex_ndIds, xId, yId, zId);
-				if (ndId2 >= 0 && ndId2 != ndId)
+			for (int j = -2; j <= 2; j++)
+				for (int k = -2; k <= 2; k++)
 				{
-					cuda_vector_fixed<float, 3> g2 = dev_ed_nodes[ndId2].g;
-					float dist_sq = dist_square<3>(g.data_block(), g2.data_block());
+					int xId = xCubeId + i;
+					int yId = yCubeId + j;
+					int zId = zCubeId + k;
 
-					if (dist_sq < 4.0f*nodes_min_dist*nodes_min_dist) //2*nodes_min_dist away
+					if (xId >= 0 && yId >= 0 && zId >= 0 &&
+						xId < ed_cubes_dims.x && yId < ed_cubes_dims.y && zId < ed_cubes_dims.z)
 					{
-						if (dist_sq < dists_sq[0])
+						short ndId2 = tex3D<short>(tex_ndIds, (float)xId, (float)yId, (float)zId);
+						if (ndId2 >= 0 && ndId2 != ndId)
 						{
-							dists_sq[0] = dist_sq;
-							ngn_idx[0] = ndId2;
-						}
+							cuda_vector_fixed<float, 3> g2 = dev_ed_nodes[ndId2].g;
+							float dist_sq = dist_square<3>(g.data_block(), g2.data_block());
 
-						for (int c = 1; c < EDNODE_NN; c++)
-						{
-							if (dist_sq < dists_sq[c])
+							if (dist_sq < 4.0f * nodes_min_dist * nodes_min_dist) // 2*nodes_min_dist away
 							{
-								dists_sq[c - 1] = dists_sq[c];
-								ngn_idx[c - 1] = ngn_idx[c];
-								dists_sq[c] = dist_sq;
-								ngn_idx[c] = ndId2;
+								if (dist_sq < dists_sq[0])
+								{
+									dists_sq[0] = dist_sq;
+									ngn_idx[0] = ndId2;
+								}
+
+								for (int c = 1; c < EDNODE_NN; c++)
+								{
+									if (dist_sq < dists_sq[c])
+									{
+										dists_sq[c - 1] = dists_sq[c];
+										ngn_idx[c - 1] = ngn_idx[c];
+										dists_sq[c] = dist_sq;
+										ngn_idx[c] = ndId2;
+									}
+								}
 							}
 						}
 					}
 				}
-			}
-		}
 
 		for (int i = 0; i < EDNODE_NN; i++)
 		{
 			dev_ed_nodes[ndId].neighbors[i] = ngn_idx[i];
 			if (ngn_idx[i] != -1)
 			{
-				int id = ndId*ed_nodes_num + ngn_idx[i];
+				int id = ndId * ed_nodes_num + ngn_idx[i];
 				dev_jtj_2d_infos[id].y |= 2;
 			}
 		}
@@ -96,15 +102,13 @@ void FindEDNodesNeighbors_Kernel(short2 *dev_jtj_2d_infos,
 	}
 }
 
-
-//TODO
-//NOTE: only one cuda block is used, can handle upto 24k ED nodes with GTX980
-//get the symmetric version of ed node neighbors
-__global__
-void CompleteEDNodeNeighbors_Kernel(short2 const*dev_jtj_2d_infos, //the one before running kernel ComposeJtJ2DInfoRegTerm_Kernal
-									DeformGraphNodeCuda *dev_ed_nodes, int ed_nodes_num)
+// TODO
+// NOTE: only one cuda block is used, can handle upto 24k ED nodes with GTX980
+// get the symmetric version of ed node neighbors
+__global__ void CompleteEDNodeNeighbors_Kernel(short2 const *dev_jtj_2d_infos, // the one before running kernel ComposeJtJ2DInfoRegTerm_Kernal
+											   DeformGraphNodeCuda *dev_ed_nodes, int ed_nodes_num)
 {
-	__shared__ int ndNeighborsCounts[ED_NODES_NUM_MAX]; //can up to 96k/4 ed nodes
+	__shared__ int ndNeighborsCounts[ED_NODES_NUM_MAX]; // can up to 96k/4 ed nodes
 	for (int i = threadIdx.x; i < ed_nodes_num; i += blockDim.x)
 		ndNeighborsCounts[i] = EDNODE_NN;
 	__syncthreads();
@@ -114,7 +118,7 @@ void CompleteEDNodeNeighbors_Kernel(short2 const*dev_jtj_2d_infos, //the one bef
 		for (int k = 0; k < EDNODE_NN; k++)
 		{
 			int ndIdx2 = dev_ed_nodes[ndIdx].neighbors[k];
-			if (ndIdx2 >= 0 && !(dev_jtj_2d_infos[ed_nodes_num*ndIdx2+ndIdx].y & 2) ) //if ndIdx is not a neighbor of ndIdx2
+			if (ndIdx2 >= 0 && !(dev_jtj_2d_infos[ed_nodes_num * ndIdx2 + ndIdx].y & 2)) // if ndIdx is not a neighbor of ndIdx2
 			{
 				int count = atomicAdd(&(ndNeighborsCounts[ndIdx2]), 1);
 				dev_ed_nodes[ndIdx2].neighbors[count] = ndIdx;
@@ -123,12 +127,11 @@ void CompleteEDNodeNeighbors_Kernel(short2 const*dev_jtj_2d_infos, //the one bef
 	}
 }
 
-//get dev_jtj offset for each reg-only jtj block
-//get the list of node pairs for reg term
-__global__
-void SetupEDNodesRegTerm_Kernal(ushort2 *dev_reg_node_pairs_list_buf, int node_pairs_list_buf_size, int *dev_global_reg_count,
-							    short2 *dev_jtj_2d_infos, int ed_nodes_num, int* dev_jtj_blks_count,
-								HessianBlockInfoCuda *dev_block_info_buf, int block_info_buf_size)
+// get dev_jtj offset for each reg-only jtj block
+// get the list of node pairs for reg term
+__global__ void SetupEDNodesRegTerm_Kernal(ushort2 *dev_reg_node_pairs_list_buf, int node_pairs_list_buf_size, int *dev_global_reg_count,
+										   short2 *dev_jtj_2d_infos, int ed_nodes_num, int *dev_jtj_blks_count,
+										   HessianBlockInfoCuda *dev_block_info_buf, int block_info_buf_size)
 {
 	__shared__ int shPos;
 	__shared__ int shRegCount;
@@ -140,12 +143,12 @@ void SetupEDNodesRegTerm_Kernal(ushort2 *dev_reg_node_pairs_list_buf, int node_p
 	}
 	__syncthreads();
 
-	int idx = threadIdx.x + blockIdx.x*blockDim.x;
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 
-	int lcPos = 0;//data position for jtj in dev_jtj
+	int lcPos = 0; // data position for jtj in dev_jtj
 	int lcRegCount = 0;
 	short2 t_new;
-	if (idx < ed_nodes_num*ed_nodes_num)
+	if (idx < ed_nodes_num * ed_nodes_num)
 	{
 		int i = idx / ed_nodes_num;
 		int j = idx % ed_nodes_num;
@@ -153,12 +156,12 @@ void SetupEDNodesRegTerm_Kernal(ushort2 *dev_reg_node_pairs_list_buf, int node_p
 		if (i > j)
 		{
 			t_new = dev_jtj_2d_infos[idx];
-			t_new.y |= dev_jtj_2d_infos[j*ed_nodes_num + i].y;
+			t_new.y |= dev_jtj_2d_infos[j * ed_nodes_num + i].y;
 
-			if (t_new.y & 2) //if reg
+			if (t_new.y & 2) // if reg
 			{
 				lcRegCount = atomicAdd(&shRegCount, 1);
-				if (!(t_new.y & 1))  //if reg only
+				if (!(t_new.y & 1)) // if reg only
 				{
 					lcPos = atomicAdd(&shPos, 1);
 				}
@@ -174,19 +177,19 @@ void SetupEDNodesRegTerm_Kernal(ushort2 *dev_reg_node_pairs_list_buf, int node_p
 	}
 	__syncthreads();
 
-	if (idx < ed_nodes_num*ed_nodes_num)
+	if (idx < ed_nodes_num * ed_nodes_num)
 	{
 		int i = idx / ed_nodes_num;
 		int j = idx % ed_nodes_num;
 		if (i > j)
 		{
-			//write jtj data offset
+			// write jtj data offset
 			if ((t_new.y & 2) && !(t_new.y & 1))
 			{
 				int pos = shPos + lcPos;
 				t_new.x = pos;
 
-				//write the jtj block info
+				// write the jtj block info
 				dev_block_info_buf[pos].vtii_first = -1;
 				dev_block_info_buf[pos].vts_num = 0;
 				dev_block_info_buf[pos].data_offset = pos * 144;
@@ -197,7 +200,7 @@ void SetupEDNodesRegTerm_Kernal(ushort2 *dev_reg_node_pairs_list_buf, int node_p
 			}
 			dev_jtj_2d_infos[idx] = t_new;
 
-			//write node pair indices
+			// write node pair indices
 			if (t_new.y & 2)
 			{
 				lcRegCount += shRegCount;
@@ -213,29 +216,25 @@ void SetupEDNodesRegTerm_Kernal(ushort2 *dev_reg_node_pairs_list_buf, int node_p
 	}
 }
 
-
-__global__ 
-void init_short2_array_2d(short2 *p_array, int dim, short2 val)
+__global__ void init_short2_array_2d(short2 *p_array, int dim, short2 val)
 {
-	int idx = threadIdx.x + blockIdx.x*blockDim.x;
-	if (idx < dim*dim)
-		p_array[idx] = val;	
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	if (idx < dim * dim)
+		p_array[idx] = val;
 }
 
-//Note: all the diagonal blocks have HessianBlockInfoCuda items in the successive order, and their jtj data is also in order.
-//      even when no points associated with it
-__global__
-void CountPtsForDiagKernel_vAtomic( short2 *dev_jtj_2d_infos,
-									int const*dev_ngns_indices, float const* dev_ngns_weights, int vts_num,
-									int* dev_vt_indices_for_jtj, float* dev_vt_weights_for_jtj,
-									HessianBlockInfoCuda *dev_block_info_buf, 
-									int block_info_buf_size,
-									int ed_nodes_num
-									)
+// Note: all the diagonal blocks have HessianBlockInfoCuda items in the successive order, and their jtj data is also in order.
+//       even when no points associated with it
+__global__ void CountPtsForDiagKernel_vAtomic(short2 *dev_jtj_2d_infos,
+											  int const *dev_ngns_indices, float const *dev_ngns_weights, int vts_num,
+											  int *dev_vt_indices_for_jtj, float *dev_vt_weights_for_jtj,
+											  HessianBlockInfoCuda *dev_block_info_buf,
+											  int block_info_buf_size,
+											  int ed_nodes_num)
 {
-	__shared__ int jtjBlkPtsCounts[MAX_THREADS_PER_BLOCK]; //number of points associated with a jtj block
-	int blkId = threadIdx.x + MAX_THREADS_PER_BLOCK*blockIdx.x;
-	int blockStart = MAX_THREADS_PER_BLOCK*blockIdx.x;
+	__shared__ int jtjBlkPtsCounts[MAX_THREADS_PER_BLOCK]; // number of points associated with a jtj block
+	int blkId = threadIdx.x + MAX_THREADS_PER_BLOCK * blockIdx.x;
+	int blockStart = MAX_THREADS_PER_BLOCK * blockIdx.x;
 	int blockEnd = MAX_THREADS_PER_BLOCK;
 	jtjBlkPtsCounts[threadIdx.x] = 0;
 
@@ -243,7 +242,7 @@ void CountPtsForDiagKernel_vAtomic( short2 *dev_jtj_2d_infos,
 
 	if (threadIdx.x == 0)
 	{
-		//shPos = 0;
+		// shPos = 0;
 		shOffset = 0;
 	}
 	__syncthreads();
@@ -251,10 +250,10 @@ void CountPtsForDiagKernel_vAtomic( short2 *dev_jtj_2d_infos,
 	int localPos = 0;
 	int localOffset = 0;
 
-	for (int ckSt = threadIdx.x; ckSt < vts_num* NEIGHBOR_EDNODE_NUM; ckSt += MAX_THREADS_PER_BLOCK)
+	for (int ckSt = threadIdx.x; ckSt < vts_num * NEIGHBOR_EDNODE_NUM; ckSt += MAX_THREADS_PER_BLOCK)
 	{
 		int ngn_idx = dev_ngns_indices[ckSt];
-		if (ngn_idx >= 0) //ngn_idx might be invalid (-1)
+		if (ngn_idx >= 0) // ngn_idx might be invalid (-1)
 		{
 			int id = ngn_idx - blockStart;
 			if (id >= 0 && id < blockEnd)
@@ -277,8 +276,8 @@ void CountPtsForDiagKernel_vAtomic( short2 *dev_jtj_2d_infos,
 	}
 	__syncthreads();
 
-	//write out count information
-	int pos = blockStart+threadIdx.x;//in order
+	// write out count information
+	int pos = blockStart + threadIdx.x; // in order
 	int offset = shOffset + localOffset;
 	if (pos < block_info_buf_size && pos < ed_nodes_num)
 	{
@@ -294,46 +293,43 @@ void CountPtsForDiagKernel_vAtomic( short2 *dev_jtj_2d_infos,
 		short2 info;
 		info.x = pos;
 		info.y = 1;
-		dev_jtj_2d_infos[pos*ed_nodes_num + pos] = info;
+		dev_jtj_2d_infos[pos * ed_nodes_num + pos] = info;
 	}
 	__syncthreads();
-	
-	//write out indices
-	for (int ckSt = threadIdx.x; ckSt < vts_num* NEIGHBOR_EDNODE_NUM; ckSt += MAX_THREADS_PER_BLOCK)
+
+	// write out indices
+	for (int ckSt = threadIdx.x; ckSt < vts_num * NEIGHBOR_EDNODE_NUM; ckSt += MAX_THREADS_PER_BLOCK)
 	{
 		int ngn_idx = dev_ngns_indices[ckSt];
-		if (ngn_idx >= 0) //ngn_idx might be invalid (-1)
+		if (ngn_idx >= 0) // ngn_idx might be invalid (-1)
 		{
 			int id = ngn_idx - blockStart;
 			float w = dev_ngns_weights[ckSt];
 			if (id >= 0 && id < blockEnd)
 			{
-				//where to place the idx
+				// where to place the idx
 				int vt_offset = atomicAdd(&(jtjBlkPtsCounts[id]), 1);
 				dev_vt_indices_for_jtj[vt_offset] = ckSt / NEIGHBOR_EDNODE_NUM;
 				dev_vt_weights_for_jtj[vt_offset] = w * w;
 			}
 		}
 	}
-	
 }
 
-
-__global__
-void CountPtsForOffDiagKernel_vAtomic(short2 * __restrict__ dev_jtj_2d_infos,
-									  int const* __restrict__ dev_ngns_indices, float const* __restrict__ dev_ngns_weights, int vts_num,
-									  int* __restrict__ dev_vt_indices_for_jtj, float* __restrict__ dev_vt_weights_for_jtj,
-									  HessianBlockInfoCuda * __restrict__ dev_block_info_buf,
-									  int block_info_buf_size,
-									  int* __restrict__ dev_jtj_blks_count,
-									  int ed_nodes_num,
-									  int thres_pt_count)
+__global__ void CountPtsForOffDiagKernel_vAtomic(short2 *__restrict__ dev_jtj_2d_infos,
+												 int const *__restrict__ dev_ngns_indices, float const *__restrict__ dev_ngns_weights, int vts_num,
+												 int *__restrict__ dev_vt_indices_for_jtj, float *__restrict__ dev_vt_weights_for_jtj,
+												 HessianBlockInfoCuda *__restrict__ dev_block_info_buf,
+												 int block_info_buf_size,
+												 int *__restrict__ dev_jtj_blks_count,
+												 int ed_nodes_num,
+												 int thres_pt_count)
 {
-	__shared__ int jtjBlkPtsCounts[OFFDIAGONALBLKS_PER_CUDA_BLOCK]; //number of points associated with a jtj block
+	__shared__ int jtjBlkPtsCounts[OFFDIAGONALBLKS_PER_CUDA_BLOCK]; // number of points associated with a jtj block
 	__shared__ int shPos;
 	__shared__ int shOffset;
 
-	int blockStart = OFFDIAGONALBLKS_PER_CUDA_BLOCK*blockIdx.x;
+	int blockStart = OFFDIAGONALBLKS_PER_CUDA_BLOCK * blockIdx.x;
 	int blockEnd = OFFDIAGONALBLKS_PER_CUDA_BLOCK;
 	for (int i = threadIdx.x; i < OFFDIAGONALBLKS_PER_CUDA_BLOCK; i += blockDim.x)
 	{
@@ -350,18 +346,18 @@ void CountPtsForOffDiagKernel_vAtomic(short2 * __restrict__ dev_jtj_2d_infos,
 	{
 		int ngn_idx[NEIGHBOR_EDNODE_NUM];
 		for (int i = 0; i < NEIGHBOR_EDNODE_NUM; i++)
-			ngn_idx[i] = dev_ngns_indices[NEIGHBOR_EDNODE_NUM*ckSt + i];
+			ngn_idx[i] = dev_ngns_indices[NEIGHBOR_EDNODE_NUM * ckSt + i];
 
 		int id1, id2, id;
 		for (int i = 0; i < NEIGHBOR_EDNODE_NUM; i++)
-		for (int j = 0; j < i; j++)
-		{
-			id1 = MAX(ngn_idx[i], ngn_idx[j]);
-			id2 = MIN(ngn_idx[i], ngn_idx[j]); //id1/id2 might be invalid (-1)
-			id = id1*(id1 - 1) / 2 + id2 - blockStart;
-			if (id2 >= 0 && id >= 0 && id < blockEnd)
-				atomicAdd(&(jtjBlkPtsCounts[id]), 1);
-		}	
+			for (int j = 0; j < i; j++)
+			{
+				id1 = MAX(ngn_idx[i], ngn_idx[j]);
+				id2 = MIN(ngn_idx[i], ngn_idx[j]); // id1/id2 might be invalid (-1)
+				id = id1 * (id1 - 1) / 2 + id2 - blockStart;
+				if (id2 >= 0 && id >= 0 && id < blockEnd)
+					atomicAdd(&(jtjBlkPtsCounts[id]), 1);
+			}
 	}
 	__syncthreads();
 
@@ -369,7 +365,7 @@ void CountPtsForOffDiagKernel_vAtomic(short2 * __restrict__ dev_jtj_2d_infos,
 	int localOffset[OFFDIAGONALBLKS_PER_CUDA_BLOCK / MAX_THREADS_PER_BLOCK];
 	for (int i = threadIdx.x, li = 0; i < OFFDIAGONALBLKS_PER_CUDA_BLOCK; i += MAX_THREADS_PER_BLOCK, li++)
 	{
-		if (jtjBlkPtsCounts[i]>thres_pt_count)
+		if (jtjBlkPtsCounts[i] > thres_pt_count)
 		{
 			localPos[li] = atomicAdd(&shPos, 1);
 			localOffset[li] = atomicAdd(&shOffset, jtjBlkPtsCounts[i]);
@@ -384,7 +380,7 @@ void CountPtsForOffDiagKernel_vAtomic(short2 * __restrict__ dev_jtj_2d_infos,
 	}
 	__syncthreads();
 
-	//write out count information
+	// write out count information
 	for (int i = threadIdx.x, li = 0; i < OFFDIAGONALBLKS_PER_CUDA_BLOCK; i += MAX_THREADS_PER_BLOCK, li++)
 	{
 		int pos = shPos + localPos[li];
@@ -406,12 +402,12 @@ void CountPtsForOffDiagKernel_vAtomic(short2 * __restrict__ dev_jtj_2d_infos,
 			short2 info;
 			info.x = pos;
 			info.y = 1;
-			dev_jtj_2d_infos[pi_idx*ed_nodes_num + pj_idx] = info;
+			dev_jtj_2d_infos[pi_idx * ed_nodes_num + pj_idx] = info;
 		}
 	}
 	__syncthreads();
 
-	//write out indices
+	// write out indices
 	for (int ckSt = threadIdx.x; ckSt < vts_num; ckSt += MAX_THREADS_PER_BLOCK)
 	{
 		int ngn_idx[NEIGHBOR_EDNODE_NUM];
@@ -426,30 +422,30 @@ void CountPtsForOffDiagKernel_vAtomic(short2 * __restrict__ dev_jtj_2d_infos,
 		int vt_offset, blk_offset;
 
 		for (int i = 0; i < NEIGHBOR_EDNODE_NUM; i++)
-		for (int j = 0; j < i; j++)
-		{
-			id1 = MAX(ngn_idx[i], ngn_idx[j]);
-			id2 = MIN(ngn_idx[i], ngn_idx[j]);
-			id = id1*(id1 - 1) / 2 + id2 - blockStart;
-			if (id2 >= 0 && id >= 0 && id < blockEnd && jtjBlkPtsCounts[id] > thres_pt_count)
+			for (int j = 0; j < i; j++)
 			{
-				vt_offset = atomicAdd(&(jtjBlkPtsCounts[id]), 1);
-				dev_vt_indices_for_jtj[vt_offset] = ckSt;
-				dev_vt_weights_for_jtj[vt_offset] = ngn_weights[i] * ngn_weights[j];
+				id1 = MAX(ngn_idx[i], ngn_idx[j]);
+				id2 = MIN(ngn_idx[i], ngn_idx[j]);
+				id = id1 * (id1 - 1) / 2 + id2 - blockStart;
+				if (id2 >= 0 && id >= 0 && id < blockEnd && jtjBlkPtsCounts[id] > thres_pt_count)
+				{
+					vt_offset = atomicAdd(&(jtjBlkPtsCounts[id]), 1);
+					dev_vt_indices_for_jtj[vt_offset] = ckSt;
+					dev_vt_weights_for_jtj[vt_offset] = ngn_weights[i] * ngn_weights[j];
+				}
 			}
-		}		
 	}
 }
 
-bool EDMatchingHelperCudaImpl::setup_vt_data_for_jtj(DeformGraphNodeCuda const*dev_ed_nodes, cuda::gpu_size_data ed_nodes_num_gpu,
-													int *dev_ngns_indices, float* dev_ngns_weights, int vts_num,
-													int thres_pts_num)
+bool EDMatchingHelperCudaImpl::setup_vt_data_for_jtj(DeformGraphNodeCuda const *dev_ed_nodes, cuda::gpu_size_data ed_nodes_num_gpu,
+													 int *dev_ngns_indices, float *dev_ngns_weights, int vts_num,
+													 int thres_pts_num)
 {
 	short2 info;
 	info.x = -1;
 	info.y = 0;
 	int threads_per_block = MAX_THREADS_PER_BLOCK;
-	int blocks_per_grid = (ED_NODES_NUM_MAX*ED_NODES_NUM_MAX + threads_per_block - 1) / threads_per_block;
+	int blocks_per_grid = (ED_NODES_NUM_MAX * ED_NODES_NUM_MAX + threads_per_block - 1) / threads_per_block;
 	init_short2_array_2d<<<blocks_per_grid, threads_per_block>>>(dev_jtj_2d_infos_, ED_NODES_NUM_MAX, info);
 	m_checkCudaErrors();
 
@@ -463,27 +459,24 @@ bool EDMatchingHelperCudaImpl::setup_vt_data_for_jtj(DeformGraphNodeCuda const*d
 	tmp = vts_num * NEIGHBOR_EDNODE_NUM;
 	checkCudaErrors(cudaMemcpyToSymbolAsync(dev_globalOffset2, &tmp, sizeof(int)));
 
-
 	threads_per_block = MAX_THREADS_PER_BLOCK;
-	blocks_per_grid = (ed_nodes_num*(ed_nodes_num - 1) / 2 + OFFDIAGONALBLKS_PER_CUDA_BLOCK - 1) / OFFDIAGONALBLKS_PER_CUDA_BLOCK;
+	blocks_per_grid = (ed_nodes_num * (ed_nodes_num - 1) / 2 + OFFDIAGONALBLKS_PER_CUDA_BLOCK - 1) / OFFDIAGONALBLKS_PER_CUDA_BLOCK;
 	CountPtsForOffDiagKernel_vAtomic<<<blocks_per_grid, threads_per_block>>>(dev_jtj_2d_infos_,
-																			  dev_ngns_indices, dev_ngns_weights, vts_num,
-																			  dev_vt_indices_for_jtj_, dev_vt_weights_for_jtj_,
-																			  dev_jtj_blk_info_buf_, jtj_blks_count_gpu_.max_size,
-																			  jtj_blks_count_gpu_.dev_ptr,
-																			  ed_nodes_num,
-																			  thres_pts_num);
+																			 dev_ngns_indices, dev_ngns_weights, vts_num,
+																			 dev_vt_indices_for_jtj_, dev_vt_weights_for_jtj_,
+																			 dev_jtj_blk_info_buf_, jtj_blks_count_gpu_.max_size,
+																			 jtj_blks_count_gpu_.dev_ptr,
+																			 ed_nodes_num,
+																			 thres_pts_num);
 	m_checkCudaErrors();
-
 
 	blocks_per_grid = (ed_nodes_num + threads_per_block - 1) / threads_per_block;
-	CountPtsForDiagKernel_vAtomic<<<blocks_per_grid, threads_per_block >>>(dev_jtj_2d_infos_,
-																			dev_ngns_indices, dev_ngns_weights, vts_num,
-																			dev_vt_indices_for_jtj_, dev_vt_weights_for_jtj_,
-																			dev_jtj_blk_info_buf_, jtj_blks_count_gpu_.max_size,
-																			ed_nodes_num);
+	CountPtsForDiagKernel_vAtomic<<<blocks_per_grid, threads_per_block>>>(dev_jtj_2d_infos_,
+																		  dev_ngns_indices, dev_ngns_weights, vts_num,
+																		  dev_vt_indices_for_jtj_, dev_vt_weights_for_jtj_,
+																		  dev_jtj_blk_info_buf_, jtj_blks_count_gpu_.max_size,
+																		  ed_nodes_num);
 	m_checkCudaErrors();
-
 
 	if (LOGGER()->check_verbosity(Logger::Debug))
 	{
@@ -502,23 +495,22 @@ bool EDMatchingHelperCudaImpl::setup_vt_data_for_jtj(DeformGraphNodeCuda const*d
 	return true;
 }
 
-bool EDMatchingHelperCudaImpl::setup_ed_nodes_reg_term( short2 *dev_jtj_2d_infos,
-														DeformGraphNodeCuda *dev_ed_nodes, int ed_nodes_num,
-														cudaArray* cu_3dArr_ndIds,
-														int3 ed_cubes_dims,
-														float3 ed_cubes_offsets,
-														float ed_cube_res,
-														float nodes_min_dist
-														)
+bool EDMatchingHelperCudaImpl::setup_ed_nodes_reg_term(short2 *dev_jtj_2d_infos,
+													   DeformGraphNodeCuda *dev_ed_nodes, int ed_nodes_num,
+													   cudaArray *cu_3dArr_ndIds,
+													   int3 ed_cubes_dims,
+													   float3 ed_cubes_offsets,
+													   float ed_cube_res,
+													   float nodes_min_dist)
 {
 	int threads_per_block = 64;
-	int blocks_per_grid = (ed_nodes_num + threads_per_block-1) / threads_per_block;
+	int blocks_per_grid = (ed_nodes_num + threads_per_block - 1) / threads_per_block;
 	FindEDNodesNeighbors_Kernel<<<blocks_per_grid, threads_per_block>>>(dev_jtj_2d_infos,
 																		dev_ed_nodes, ed_nodes_num,
 																		ed_cubes_dims, ed_cubes_offsets, ed_cube_res,
 																		nodes_min_dist);
 	m_checkCudaErrors();
-	
+
 	CompleteEDNodeNeighbors_Kernel<<<1, MAX_THREADS_PER_BLOCK>>>(dev_jtj_2d_infos, dev_ed_nodes, ed_nodes_num);
 	m_checkCudaErrors();
 
@@ -529,7 +521,7 @@ bool EDMatchingHelperCudaImpl::setup_ed_nodes_reg_term( short2 *dev_jtj_2d_infos
 
 	checkCudaErrors(cudaMemsetAsync(ed_reg_pairs_count_gpu_.dev_ptr, 0, sizeof(int)));
 	threads_per_block = 1024;
-	blocks_per_grid = (ed_nodes_num*ed_nodes_num + threads_per_block - 1) / threads_per_block;
+	blocks_per_grid = (ed_nodes_num * ed_nodes_num + threads_per_block - 1) / threads_per_block;
 	SetupEDNodesRegTerm_Kernal<<<blocks_per_grid, threads_per_block>>>(dev_reg_node_pairs_list_buf_, ed_reg_pairs_count_gpu_.max_size, ed_reg_pairs_count_gpu_.dev_ptr,
 																	   dev_jtj_2d_infos, ed_nodes_num, jtj_blks_count_gpu_.dev_ptr,
 																	   dev_jtj_blk_info_buf_, jtj_blks_count_gpu_.max_size);
@@ -572,17 +564,25 @@ int EDMatchingHelperCudaImpl::read_globalOffset2()
 	return ret;
 }
 
-bool EDMatchingHelperCudaImpl::bind_tex_ndId(cudaArray* cu_3dArr_ndIds)
+bool EDMatchingHelperCudaImpl::bind_tex_ndId(cudaArray *cu_3dArr_ndIds)
 {
-	// set texture parameters
-	tex_ndIds.addressMode[0] = cudaAddressModeClamp;
-	tex_ndIds.addressMode[1] = cudaAddressModeClamp;
-	tex_ndIds.addressMode[2] = cudaAddressModeClamp;
-	tex_ndIds.filterMode = cudaFilterModePoint;
-	tex_ndIds.normalized = false;  // access with un-normalized texture coordinates
-	// Bind the array to the texture
+	if (tex_ndIds)
+	{
+		cudaDestroyTextureObject(tex_ndIds);
+		tex_ndIds = 0;
+	}
 	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(16, 0, 0, 0, cudaChannelFormatKindSigned);
-	checkCudaErrors(cudaBindTextureToArray(tex_ndIds, cu_3dArr_ndIds, channelDesc));
+	cudaResourceDesc resDesc = {};
+	resDesc.resType = cudaResourceTypeArray;
+	resDesc.res.array.array = cu_3dArr_ndIds;
+	cudaTextureDesc texDesc = {};
+	texDesc.addressMode[0] = cudaAddressModeClamp;
+	texDesc.addressMode[1] = cudaAddressModeClamp;
+	texDesc.addressMode[2] = cudaAddressModeClamp;
+	texDesc.filterMode = cudaFilterModePoint;
+	texDesc.readMode = cudaReadModeElementType;
+	texDesc.normalizedCoords = 0;
+	checkCudaErrors(cudaCreateTextureObject(&tex_ndIds, &resDesc, &texDesc, NULL));
 
 	return true;
 }
@@ -591,25 +591,24 @@ void EDMatchingHelperCudaImpl::allocate_jtj_related_memory(int vts_num_max)
 {
 	checkCudaErrors(cudaMalloc(&(jtj_blks_count_gpu_.dev_ptr), sizeof(int)));
 	jtj_blks_count_gpu_.max_size = JTJ_BLKS_NUM_MAX;
-	checkCudaErrors(cudaMalloc(&dev_jtj_blk_info_buf_, sizeof(HessianBlockInfoCuda)*JTJ_BLKS_NUM_MAX));
-	checkCudaErrors(cudaMalloc(&dev_jtj_2d_infos_, sizeof(short2)*ED_NODES_NUM_MAX*ED_NODES_NUM_MAX));
+	checkCudaErrors(cudaMalloc(&dev_jtj_blk_info_buf_, sizeof(HessianBlockInfoCuda) * JTJ_BLKS_NUM_MAX));
+	checkCudaErrors(cudaMalloc(&dev_jtj_2d_infos_, sizeof(short2) * ED_NODES_NUM_MAX * ED_NODES_NUM_MAX));
 
-	checkCudaErrors(cudaMalloc(&dev_vt_indices_for_jtj_, sizeof(int)*vts_num_max*JTJ_BLKS_NUM_INDUCED_PER_VERTEX));
-	checkCudaErrors(cudaMalloc(&dev_vt_weights_for_jtj_, sizeof(float)*vts_num_max*JTJ_BLKS_NUM_INDUCED_PER_VERTEX));
-	checkCudaErrors(cudaMalloc(&dev_jtj_, sizeof(float)*JTJ_BLKS_NUM_MAX * 144));
-	checkCudaErrors(cudaMalloc(&dev_jtf_, sizeof(float)*ED_NODES_NUM_MAX * 12));
-	checkCudaErrors(cudaMalloc(&dev_cam_vis_, sizeof(ushort2)*vts_num_max));
+	checkCudaErrors(cudaMalloc(&dev_vt_indices_for_jtj_, sizeof(int) * vts_num_max * JTJ_BLKS_NUM_INDUCED_PER_VERTEX));
+	checkCudaErrors(cudaMalloc(&dev_vt_weights_for_jtj_, sizeof(float) * vts_num_max * JTJ_BLKS_NUM_INDUCED_PER_VERTEX));
+	checkCudaErrors(cudaMalloc(&dev_jtj_, sizeof(float) * JTJ_BLKS_NUM_MAX * 144));
+	checkCudaErrors(cudaMalloc(&dev_jtf_, sizeof(float) * ED_NODES_NUM_MAX * 12));
+	checkCudaErrors(cudaMalloc(&dev_cam_vis_, sizeof(ushort2) * vts_num_max));
 
-	//for jtj block-vertex association
+	// for jtj block-vertex association
 	checkCudaErrors(cudaMalloc(&dev_global_pts_jtj_count_, sizeof(int)));
-	checkCudaErrors(cudaMalloc(&dev_pt_counts_Diag_block_, sizeof(int)*ED_NODES_NUM_MAX));
-	checkCudaErrors(cudaMalloc(&dev_pt_counts_offDiag_block_, sizeof(int)*ED_NODES_NUM_MAX*(ED_NODES_NUM_MAX - 1) / 2));
+	checkCudaErrors(cudaMalloc(&dev_pt_counts_Diag_block_, sizeof(int) * ED_NODES_NUM_MAX));
+	checkCudaErrors(cudaMalloc(&dev_pt_counts_offDiag_block_, sizeof(int) * ED_NODES_NUM_MAX * (ED_NODES_NUM_MAX - 1) / 2));
 
-
-	//ed node regualization term
+	// ed node regualization term
 	checkCudaErrors(cudaMalloc(&(ed_reg_pairs_count_gpu_.dev_ptr), sizeof(int)));
 	ed_reg_pairs_count_gpu_.max_size = ED_NODES_NUM_MAX * EDNODE_NN;
-	checkCudaErrors(cudaMalloc(&dev_reg_node_pairs_list_buf_, sizeof(ushort2)*ed_reg_pairs_count_gpu_.max_size));
+	checkCudaErrors(cudaMalloc(&dev_reg_node_pairs_list_buf_, sizeof(ushort2) * ed_reg_pairs_count_gpu_.max_size));
 }
 
 #include "EDMatchingHelperCudaImplInit_v2.cu"

@@ -24,7 +24,7 @@ inline bool is_clockwise_tri(T lookat[], T v1[], T v2[], T v3[])
 		return true;
 }
 
-template<class T, int N>
+template<class T, unsigned int N>
 double angle_btw_two_vec(vnl_vector_fixed<T, N> normal1, vnl_vector_fixed<T, N> normal2)
 {
 	normal1.normalize();

@@ -43,8 +43,8 @@ public:
 	void End(const std::string& key);
 	void SetMessage(const std::string& key, const std::string& message);
 
-	std::map<std::string, TimingData>::iterator& IterBegin();
-	std::map<std::string, TimingData>::iterator& IterEnd();
+	std::map<std::string, TimingData>::iterator IterBegin();
+	std::map<std::string, TimingData>::iterator IterEnd();
 
 	void LogTimes(Logger::Verbosity level);
 	void SetPrefix(const std::string& prefix) {

@@ -623,7 +623,7 @@ CSurface<T> *DepthMap2SurfaceOrtho(cv::Mat const& depthMap, cv::Mat const& img, 
 	{
 		for (int j = 0; j<w; j++)
 		{
-			if (depthMap.at<double>(i, j); <= 0.0)
+				if (depthMap.at<double>(i, j) <= 0.0)
 				continue;
 
 			points_num++;
@@ -632,7 +632,7 @@ CSurface<T> *DepthMap2SurfaceOrtho(cv::Mat const& depthMap, cv::Mat const& img, 
 
 	T *points = new T[3 * points_num];
 	T *colors = NULL;
-	if (img != NULL)
+	if (!img.empty())
 		colors = new T[3 * points_num];
 	T *normals = NULL;
 	if (normalMap != NULL)
@@ -657,7 +657,7 @@ CSurface<T> *DepthMap2SurfaceOrtho(cv::Mat const& depthMap, cv::Mat const& img, 
 
 			idx_array[i*w + j] = idx;
 
-			if (img != NULL)
+				if (!img.empty())
 			{
 				colors[3 * idx] = img.at<cv::Vec3b>(i, j)[2] / 255.0;
 				colors[3 * idx + 1] = img.at<cv::Vec3b>(i, j)[1] / 255.0;
@@ -770,7 +770,7 @@ CSurface<T> *DepthMap2SurfaceOrtho(cv::Mat const& depthMap, cv::Mat const& img, 
 
 	CSurface<T> *ret = new CSurface<T>();
 	int vtDim = 3;
-	if (img != NULL)
+	if (!img.empty())
 		vtDim += 3;
 	if (normalMap != NULL)
 		vtDim += 3;
@@ -782,7 +782,7 @@ CSurface<T> *DepthMap2SurfaceOrtho(cv::Mat const& depthMap, cv::Mat const& img, 
 		vtData[vtDim*i + 1] = points[3 * i + 1];
 		vtData[vtDim*i + 2] = points[3 * i + 2];
 	}
-	if (img != NULL)
+	if (!img.empty())
 	{
 		for (int i = 0; i<points_num; i++)
 		{
@@ -808,7 +808,7 @@ CSurface<T> *DepthMap2SurfaceOrtho(cv::Mat const& depthMap, cv::Mat const& img, 
 	for (int i = 0; i<tri_num * 3; i++)
 		triangles[i] = triangles_vec[i];
 
-	ret->color = (img != NULL) ? true : false;
+	ret->color = !img.empty();
 	ret->normal = (normalMap != NULL) ? true : false;
 	ret->vtNum = points_num;
 	ret->vtData = vtData;
@@ -863,7 +863,7 @@ bool DepthMap2Surface( vpgl_perspective_camera<double> const& cam, cv::Mat const
 					   double a, double b, //a and b is working on depth value z = a*z+b
 					   bool bNormal)
 {
-	if( depthMap_undistort == NULL )
+	if( depthMap_undistort.empty() )
 	{
 		printf("Error<DepthMap2Surface>: depthMat is NULL!\n");
 		return false;
@@ -1156,15 +1156,15 @@ bool ComputeDepthMap( CSurface<T> const&m_surface, vpgl_perspective_camera<doubl
 {
 	vnl_matrix_fixed<double, 3, 3> intrinsic = cam.get_calibration().get_matrix();
 	vnl_matrix_fixed<double, 3, 3> R;
-	vnl_vector_fixed<double, 3> T;
-	get_camera_pose(cam, R, T);
+	vnl_vector_fixed<double, 3> trans;
+	get_camera_pose(cam, R, trans);
 	vnl_vector<double> radial_distort(5);
 	radial_distort.fill(0.0);
 	for(int i=0; i<MIN(distort_vec.size(), 5); i++)
 		radial_distort[i] = distort_vec[i];
 	
 	GCameraView cam_view(height, width);
-	cam_view.SetCalibrationMatrix(intrinsic.data_block(), R.data_block(), T.data_block(), distort_vec.data_block());
+	cam_view.SetCalibrationMatrix(intrinsic.data_block(), R.data_block(), trans.data_block(), distort_vec.data_block());
 
 
 	cv::Mat depth_mat = ComputeDepthMap(&m_surface, &cam_view, remove_tri, bDistortDepthMap, near_clip_plane);
@@ -1321,9 +1321,9 @@ void project_a_triangle_onto_cam( vnl_matrix_fixed<double, 3, 4> const&prj_mat, 
 				LOGGER()->warning("project_a_triangle_onto_cam", "negative z!");
 				continue;
 			}
-			if( depthMap.at<double>(y, x); <= 0.0 )
+			if( depthMap.at<double>(y, x) <= 0.0 )
 				depthMap.at<double>(y, x) = z;
-			else if( z < depthMap.at<double>(y, x); )
+			else if( z < depthMap.at<double>(y, x) )
 				depthMap.at<double>(y, x) = z;
 		}
 	}
@@ -1464,9 +1464,10 @@ bool RemoveStretchedPolygon(CSurface<T> &surface_t, CSurface<T> const&surface, d
 }
 
 template<class T>
-void FillColorInfoNCams(CSurface<T> *m_surf, vector<GCameraView *>cams, vector<cv::Mat>imgs[], int camNum, bool bImgWithDistortion, bool bBlending, double gamma)
+void FillColorInfoNCams(CSurface<T> *m_surf, vector<GCameraView *>cams, vector<cv::Mat>imgs, bool bImgWithDistortion, bool bBlending, double gamma)
 {
-	if( m_surf == NULL || cams==NULL || imgs == NULL)
+	const int camNum = static_cast<int>(cams.size());
+	if( m_surf == NULL || imgs.size() < cams.size())
 	{
 		printf("Error: input is invalid!\n");
 		return;
@@ -1547,7 +1548,7 @@ void FillColorInfoNCams(CSurface<T> *m_surf, vector<GCameraView *>cams, vector<c
 			int x = ROUND(v[0]);
 			int y = ROUND(v[1]);
 			if (x >= 0 && x<cams[c]->m_Width && y >= 0 && y<cams[c]->m_Height &&
-				fabs(v[2] - depthMaps[c]->at<double>(y, x))<0.2)
+					fabs(v[2] - depthMaps[c].at<double>(y, x))<0.2)
 			{
 				//check normal
 				double theta = cams[c]->angle_btw_viewray_normal(p, n);
@@ -1772,16 +1773,17 @@ bool texture_surface_model( CSurface<T> &m_surface,
 
 		char* img_name = color_img_list[i];
 		sprintf(name, "%s/%s", data_dir, img_name);
-		cv::Mat* img_ori = cvLoadImage(name, CV_LOAD_IMAGE_UNCHANGED);	
+		cv::Mat img_ori = cv::imread(name, cv::IMREAD_UNCHANGED);
+		if (img_ori.empty())
+			continue;
 
-		int img_width = img_ori->cols;
-		int img_height = img_ori->rows;
+		int img_width = img_ori.cols;
+		int img_height = img_ori.rows;
 
 		vpgl_perspective_camera<double> cam = camera_poses[i];
 		GCameraView* cam_view = vpgl_camera_view_to_GCameraView(cam, distort_vec, img_width, img_height);
-		cv::Mat* img = cvCloneImage(img_ori);
-		cam_view->UndistortImage(img, img_ori);
-		img_ori->release();
+		cv::Mat img;
+		cam_view->UndistortImage(img_ori, img);
 		delete cam_view;
 
 		vnl_matrix<double> depthMat_re;
@@ -1795,9 +1797,9 @@ bool texture_surface_model( CSurface<T> &m_surface,
 		double cx = K[0][2];
 		double cy = K[1][2];
 		vnl_matrix_fixed<double, 3, 3> R;
-		vnl_vector_fixed<double, 3> T;
-		get_camera_pose(cam, R, T);
-		vnl_vector_fixed<double, 3> cam_cen = -R.transpose()*T;
+		vnl_vector_fixed<double, 3> trans;
+		get_camera_pose(cam, R, trans);
+		vnl_vector_fixed<double, 3> cam_cen = -R.transpose()*trans;
 		for(int k=0; k<vtNum; k++)
 		{
 			vnl_vector_fixed<double, 3> vt;
@@ -1805,7 +1807,7 @@ bool texture_surface_model( CSurface<T> &m_surface,
 			vt[1] = vtData[k*vtDim+1];
 			vt[2] = vtData[k*vtDim+2];
 
-			vnl_vector_fixed<double, 3> X_cam = R*vt+T;
+			vnl_vector_fixed<double, 3> X_cam = R*vt+trans;
 
 			//if the point locates behind the camera, then 
 			if(X_cam[2] <= 0)
@@ -1829,9 +1831,9 @@ bool texture_surface_model( CSurface<T> &m_surface,
 				continue;
 
 			float cur_color[3];
-			cur_color[0] = img->at<cv::Vec3b>(v, u)[0];
-			cur_color[1] = img->at<cv::Vec3b>(v, u)[1];
-			cur_color[2] = img->at<cv::Vec3b>(v, u)[2];
+			cur_color[0] = img.at<cv::Vec3b>(v, u)[0];
+			cur_color[1] = img.at<cv::Vec3b>(v, u)[1];
+			cur_color[2] = img.at<cv::Vec3b>(v, u)[2];
 
 			if( cur_color[0] == 0 && cur_color[1] == 0 && cur_color[2] == 0)
 				continue;
@@ -1860,8 +1862,6 @@ bool texture_surface_model( CSurface<T> &m_surface,
 				weights[k] += cur_weight;	
 			}
 		}
-
-		img->release();
 	}
 
 	if( m_surface.haveColorInfo() )
@@ -2325,7 +2325,7 @@ bool mask_surface(CSurface<T> &surface, GCameraView const* cam, cv::Mat const* m
 
 		int ui = u_;
 		int vi = v_;
-		if (depthMat_prj.at<double>(vi, ui); > 0.0 &&
+		if (depthMat_prj.at<double>(vi, ui) > 0.0 &&
 			depthMat_prj.at<double>(vi, ui + 1) > 0.0 &&
 			depthMat_prj.at<double>(vi + 1, ui) > 0.0 &&
 			depthMat_prj.at<double>(vi + 1, ui + 1))

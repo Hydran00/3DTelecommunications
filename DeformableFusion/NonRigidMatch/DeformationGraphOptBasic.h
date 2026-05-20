@@ -14,7 +14,7 @@
 #include "RigidTransformModel.h"
 
 #ifdef USE_CERES_SOLVER
-#include "ceres\ceres.h"
+#include "ceres/ceres.h"
 using namespace ceres;
 #endif
 

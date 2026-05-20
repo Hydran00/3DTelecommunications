@@ -20,7 +20,7 @@
 
 #include "color_map.h"
 
-#include "..\FusionDemo-MultiView\FusionConfig.h"
+#include "../FusionDemo-MultiView/FusionConfig.h"
 
 class Fusion4DKeyFrames
 {

@@ -4,7 +4,7 @@
 //===============================================
 #ifndef __MORPHOLOGICALOPERATION_H__
 #define __MORPHOLOGICALOPERATION_H__
-#include "opencv2\opencv.hpp"
+#include "opencv2/opencv.hpp"
 
 bool MorphCloseOper(cv::Mat& bImg, int diameter=7, bool bComplex = false);
 bool MorphOpenOper(cv::Mat& bImg, int diameter);

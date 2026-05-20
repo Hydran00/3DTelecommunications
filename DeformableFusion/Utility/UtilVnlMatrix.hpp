@@ -317,16 +317,15 @@ bool saveVNLMatrix2IMG(const char* filename, vnl_matrix<T> const&mat)
 		printf("Error in saveVNLMatrix2IMG<%s>: all zeros!\n", filename);
 		return false;
 	}
-	cv::Mat* img = &cv::Mat(h, w, CV_8UC1);
+	cv::Mat img(h, w, CV_8UC1);
 	for(int i=0; i<h; i++)
 	{
 		for(int j=0; j<w; j++)
 		{
-			img->at<uchar>(i, j) = (double)(mat[i][j]-min_val)/(double)(max_val-min_val) * 255.0;
+			img.at<uchar>(i, j) = (double)(mat[i][j]-min_val)/(double)(max_val-min_val) * 255.0;
 		}
 	}
-	cv::imwrite(filename, *img);
-	img->release();
+	cv::imwrite(filename, img);
 	return true;
 }
 
@@ -413,7 +412,7 @@ bool saveVnlVectorSetASCAII(const char* filename, vector< vnl_vector<T> > const&
 	return true;
 }
 
-template<class T, int N>
+template<class T, unsigned int N>
 bool saveVnlVectorSetASCAII(const char* filename, vector< vnl_vector_fixed<T, N> > const&vecs)
 {
 	ofstream data_file(filename);
@@ -432,7 +431,7 @@ bool saveVnlVectorSetASCAII(const char* filename, vector< vnl_vector_fixed<T, N>
 }
 
 
-template<class T, int N>
+template<class T, unsigned int N>
 bool loadVnlVectorSetASCAII(const char* filename, vector< vnl_vector_fixed<T, N> > &vecs)
 {
 	ifstream data_file(filename);

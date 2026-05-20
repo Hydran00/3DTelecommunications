@@ -1,7 +1,7 @@
 #ifndef __DEFORMGRAPHCORE_H__
 #define __DEFORMGRAPHCORE_H__
-#include <vnl\vnl_vector_fixed.h>
-#include <vnl\vnl_matrix_fixed.h>
+#include <vnl/vnl_vector_fixed.h>
+#include <vnl/vnl_matrix_fixed.h>
 #include <vector>
 #include "RigidTransformModel.h"
 

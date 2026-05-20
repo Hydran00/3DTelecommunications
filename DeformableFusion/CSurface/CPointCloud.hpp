@@ -265,7 +265,7 @@ bool CPointCloud<T>::readFromFileBIN(const char* filename)
 				this->normals[i] = buf_f[i];
 		}
 		else
-			throw std::exception("type error!");
+			throw std::runtime_error("type error!");
 	}
 
 	if(bColor)
@@ -288,7 +288,7 @@ bool CPointCloud<T>::readFromFileBIN(const char* filename)
 				this->colors[i] = buf_f[i];
 		}
 		else
-			throw std::exception("type error!");
+			throw std::runtime_error("type error!");
 	}
 
 	delete [] buf;

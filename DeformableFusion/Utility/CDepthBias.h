@@ -5,6 +5,7 @@
 //===============================================
 #ifndef __CDEPTHBIAS_H__
 #define __CDEPTHBIAS_H__
+#include "LinuxCompat.h"
 #include <vector>
 #include <stdio.h>
 

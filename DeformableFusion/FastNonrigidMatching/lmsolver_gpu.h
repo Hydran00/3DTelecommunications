@@ -1,6 +1,6 @@
 #ifndef __LMSOLVER_GPU_H__
 #define __LMSOLVER_GPU_H__
-#include <opencv2\opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include "matrix_types_cuda.h"
 #include <helper_cuda.h>
 

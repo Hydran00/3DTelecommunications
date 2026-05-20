@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "opencv2\opencv.hpp"
-#include "opencv2\highgui.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/highgui.hpp"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -845,7 +845,7 @@ cv::Mat DepthMat2DepthImg(cv::Mat const& mat, bool bUseMostSignificantBits)
 	{
 		for (int j = 0; j < w; j++)
 		{
-			unsigned short ori_depth = unsigned short(MAX(0.0, mat.at<double>(i, j)*10.0));
+			unsigned short ori_depth = static_cast<unsigned short>(MAX(0.0, mat.at<double>(i, j)*10.0));
 			if (bUseMostSignificantBits)
 				img.at<unsigned short>(i, j) = ori_depth << 3;
 			else
@@ -1221,4 +1221,3 @@ cv::Mat pad_alpha_for_color_CvMat(cv::Mat const& img)
 		}
 	return ret;
 }
-
