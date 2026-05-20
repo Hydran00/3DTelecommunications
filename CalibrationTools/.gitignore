@@ -1,8 +1,0 @@
-Cam*
-calib*.txt
-boards/*
-dTransf.txt
-CalibrationConversion/calibrationConversion_2048.bat
-CalibrationConversion/calibrationConversion_2048.exe
-CalibrationConversion/*.dll
-*.dll
