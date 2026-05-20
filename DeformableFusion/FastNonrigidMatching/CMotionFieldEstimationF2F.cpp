@@ -303,17 +303,23 @@ add_a_frame(cudaArray *cu_3dArr_depth,
 	if (tmp_dir != NULL)
 	{
 		CSurface<float> accu_surface_t;
-		vol_fusion.readout_surface_t(accu_surface_t);
+		vol_fusion.readout_surface_mesh(vol_fusion.dev_vts_t(), vol_fusion.vts_t_num_gpu(), vol_fusion.vt_dim(),
+			vol_fusion.dev_triangles(), vol_fusion.tris_num_gpu(),
+			accu_surface_t);
 		sprintf(name, "%s/accu_surface_t2_%04d.bin", tmp_dir, frmIdx);
 		accu_surface_t.writeToFileBIN(name);
 
 		CSurface<float> accu_surface;
-		vol_fusion.readout_surface(accu_surface);
+		vol_fusion.readout_surface_mesh(vol_fusion.dev_vts(), vol_fusion.vts_num_gpu(), vol_fusion.vt_dim(),
+			vol_fusion.dev_triangles(), vol_fusion.tris_num_gpu(),
+			accu_surface);
 		sprintf(name, "%s/accu_surface_%04d.bin", tmp_dir, frmIdx);
 		accu_surface.writeToFileBIN(name);
 
 		CSurface<float> surface_cur;
-		vol_fusion.readout_surface_cur(surface_cur);
+		vol_fusion.readout_surface_mesh(vol_fusion.dev_vts_cur(), vol_fusion.vts_cur_num_gpu(), vol_fusion.vt_dim(),
+			vol_fusion.dev_triangles(), vol_fusion.tris_num_gpu(),
+			surface_cur);
 		sprintf(name, "%s/surface_cur_%04d.bin", tmp_dir, frmIdx);
 		surface_cur.writeToFileBIN(name);
 	}

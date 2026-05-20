@@ -42,6 +42,8 @@
     <Import Project="..\..\Peabody.x64.debug.SuiteSparse_mkl.props" />
     <Import Project="..\..\Peabody.x64.debug.ceres-solver.props" />
     <Import Project="..\..\Peabody.x64.McLib2.props" />
+    <Import Project="..\..\Peabody.x64.OpenGL.props" />
+    <Import Project="..\..\Peabody.x64.FreeGLUT.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -52,6 +54,8 @@
     <Import Project="..\..\Peabody.x64.release.SuiteSparse_mkl.props" />
     <Import Project="..\..\Peabody.x64.release.ceres-solver.props" />
     <Import Project="..\..\Peabody.x64.McLib2.props" />
+    <Import Project="..\..\Peabody.x64.OpenGL.props" />
+    <Import Project="..\..\Peabody.x64.FreeGLUT.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
