@@ -35,16 +35,26 @@ namespace VolumetricFusionCuda
 {
 
 	// Use texture/surface objects (CUDA 12+ compatibility)
+	__device__ cudaTextureObject_t tex_depthImgs_vol_dev = 0;
+	__device__ cudaSurfaceObject_t surf_depthImgs_vol_dev = 0;
+	__device__ cudaTextureObject_t tex_depthImgs_f_vol_dev = 0;
+	__device__ cudaSurfaceObject_t surf_depthImgs_f_vol_dev = 0;
+	__device__ cudaTextureObject_t tex_colorImgs_vol_dev = 0;
+	__device__ cudaTextureObject_t tex_ndIds_vol_dev = 0;
+	__device__ cudaSurfaceObject_t surf_mipmaps_vol_dev = 0;
+	__device__ cudaTextureObject_t tex_normalMaps_vol_dev = 0;
+	__device__ cudaSurfaceObject_t surf_normalMaps_vol_dev = 0;
+
 #if defined(__CUDA_ARCH__)
-	__device__ cudaTextureObject_t tex_depthImgs = 0;
-	__device__ cudaSurfaceObject_t surf_depthImgs = 0;
-	__device__ cudaTextureObject_t tex_depthImgs_f = 0;
-	__device__ cudaSurfaceObject_t surf_depthImgs_f = 0;
-	__device__ cudaTextureObject_t tex_colorImgs = 0;
-	__device__ cudaTextureObject_t tex_ndIds = 0;
-	__device__ cudaSurfaceObject_t surf_mipmaps = 0;
-	__device__ cudaTextureObject_t tex_normalMaps = 0;
-	__device__ cudaSurfaceObject_t surf_normalMaps = 0;
+#define tex_depthImgs tex_depthImgs_vol_dev
+#define surf_depthImgs surf_depthImgs_vol_dev
+#define tex_depthImgs_f tex_depthImgs_f_vol_dev
+#define surf_depthImgs_f surf_depthImgs_f_vol_dev
+#define tex_colorImgs tex_colorImgs_vol_dev
+#define tex_ndIds tex_ndIds_vol_dev
+#define surf_mipmaps surf_mipmaps_vol_dev
+#define tex_normalMaps tex_normalMaps_vol_dev
+#define surf_normalMaps surf_normalMaps_vol_dev
 #else
 	cudaTextureObject_t tex_depthImgs = 0;
 	cudaSurfaceObject_t surf_depthImgs = 0;
@@ -59,6 +69,21 @@ namespace VolumetricFusionCuda
 
 	__constant__ __device__ CameraViewCuda dev_cam_views[MAX_NUM_DEPTH_CAMERAS];
 	__constant__ __device__ int dev_num_cam_views;
+
+	void sync_volumetric_texture_symbols()
+	{
+#if !defined(__CUDA_ARCH__)
+		checkCudaErrors(cudaMemcpyToSymbol(tex_depthImgs_vol_dev, &tex_depthImgs, sizeof(cudaTextureObject_t)));
+		checkCudaErrors(cudaMemcpyToSymbol(surf_depthImgs_vol_dev, &surf_depthImgs, sizeof(cudaSurfaceObject_t)));
+		checkCudaErrors(cudaMemcpyToSymbol(tex_depthImgs_f_vol_dev, &tex_depthImgs_f, sizeof(cudaTextureObject_t)));
+		checkCudaErrors(cudaMemcpyToSymbol(surf_depthImgs_f_vol_dev, &surf_depthImgs_f, sizeof(cudaSurfaceObject_t)));
+		checkCudaErrors(cudaMemcpyToSymbol(tex_colorImgs_vol_dev, &tex_colorImgs, sizeof(cudaTextureObject_t)));
+		checkCudaErrors(cudaMemcpyToSymbol(tex_ndIds_vol_dev, &tex_ndIds, sizeof(cudaTextureObject_t)));
+		checkCudaErrors(cudaMemcpyToSymbol(surf_mipmaps_vol_dev, &surf_mipmaps, sizeof(cudaSurfaceObject_t)));
+		checkCudaErrors(cudaMemcpyToSymbol(tex_normalMaps_vol_dev, &tex_normalMaps, sizeof(cudaTextureObject_t)));
+		checkCudaErrors(cudaMemcpyToSymbol(surf_normalMaps_vol_dev, &surf_normalMaps, sizeof(cudaSurfaceObject_t)));
+#endif
+	}
 
 #define SDF_WEIGHT_MAX (30.0f * dev_num_cam_views)
 
@@ -98,6 +123,7 @@ namespace VolumetricFusionCuda
 			surfRes.res.array.array = cu_3dArr_depth_;
 			checkCudaErrors(cudaCreateSurfaceObject(&surf_depthImgs, &surfRes));
 		}
+		sync_volumetric_texture_symbols();
 
 		// Create texture and surface objects for depth_f
 		{
@@ -116,6 +142,7 @@ namespace VolumetricFusionCuda
 			surfRes.res.array.array = cu_3dArr_depth_f_;
 			checkCudaErrors(cudaCreateSurfaceObject(&surf_depthImgs_f, &surfRes));
 		}
+		sync_volumetric_texture_symbols();
 
 		cudaChannelFormatDesc channelDesc_mipmap = cudaCreateChannelDesc(16, 16, 0, 0, cudaChannelFormatKindUnsigned);
 		checkCudaErrors(cudaMalloc3DArray(&cu_3dArr_mipmap_, &channelDesc_mipmap, make_cudaExtent(width / 2, height, tex_num),
@@ -128,6 +155,7 @@ namespace VolumetricFusionCuda
 			surfRes.res.array.array = cu_3dArr_mipmap_;
 			checkCudaErrors(cudaCreateSurfaceObject(&surf_mipmaps, &surfRes));
 		}
+		sync_volumetric_texture_symbols();
 
 		return true;
 	}
@@ -155,6 +183,7 @@ namespace VolumetricFusionCuda
 			surfRes.res.array.array = cu_3dArr_normal_;
 			checkCudaErrors(cudaCreateSurfaceObject(&surf_normalMaps, &surfRes));
 		}
+		sync_volumetric_texture_symbols();
 
 		return true;
 	}
@@ -177,6 +206,7 @@ namespace VolumetricFusionCuda
 			texDesc.normalizedCoords = 0;
 			checkCudaErrors(cudaCreateTextureObject(&tex_colorImgs, &resDesc, &texDesc, NULL));
 		}
+		sync_volumetric_texture_symbols();
 		return true;
 	}
 
@@ -207,6 +237,7 @@ namespace VolumetricFusionCuda
 			texDesc.normalizedCoords = 0;
 			checkCudaErrors(cudaCreateTextureObject(&tex_depthImgs, &resDesc, &texDesc, NULL));
 			checkCudaErrors(cudaCreateSurfaceObject(&surf_depthImgs, &resDesc));
+			sync_volumetric_texture_symbols();
 		}
 	}
 
@@ -230,6 +261,7 @@ namespace VolumetricFusionCuda
 		texDesc.readMode = cudaReadModeElementType;
 		texDesc.normalizedCoords = 0;
 		checkCudaErrors(cudaCreateTextureObject(&tex_ndIds, &resDesc, &texDesc, NULL));
+		sync_volumetric_texture_symbols();
 	}
 
 	__device__ ushort2 pick_mipmap4(float x, float y, float r_h, float r_v, int texId, float level, int width_depth, int height_depth)

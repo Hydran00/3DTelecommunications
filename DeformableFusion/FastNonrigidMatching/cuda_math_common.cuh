@@ -8,11 +8,12 @@
 #include <cuda.h>
 #include <math.h>
 #include "../Common/debug.h"
-#include "../../Peabody.h"
-#include "CudaTextureHandles.h"
+#include "Peabody.h"
 
 #define MAX_THREADS_PER_BLOCK 1024
 #define M_EPS 1.0e-6f
+
+extern __device__ int dev_use_depth_top_bit_as_seg;
 
 #ifndef MAX
 #define MAX(x, y) (((x)>(y))?(x):(y))

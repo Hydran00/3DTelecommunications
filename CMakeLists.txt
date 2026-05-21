@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(OfflineFolderFusionBuild LANGUAGES CXX CUDA)
+project(DeformableFusionDemoBuild LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -23,6 +23,7 @@ set(PEABODY_VOLUME_CUBES_DIM_MAX 50 CACHE STRING "Maximum two-level TSDF volume 
 
 set(PEABODY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 set(DEFORMABLE_FUSION_DIR "${PEABODY_ROOT}/DeformableFusion")
+set(PEABODY_COMPAT_INCLUDE_DIR "${PEABODY_ROOT}/include/compat")
 
 set(OpenCV_DIR "$ENV{HOME}/opencv/build" CACHE PATH "OpenCV CUDA build directory")
 set(VXL_DIR "${PEABODY_ROOT}/Dependencies/vxl-install/share/vxl/cmake" CACHE PATH "VXLConfig.cmake directory")
@@ -95,7 +96,7 @@ link_directories("${VXL_LIBRARY_DIR}")
 
 add_library(project_options INTERFACE)
 target_include_directories(project_options INTERFACE
-  "${PEABODY_ROOT}"
+  "${PEABODY_COMPAT_INCLUDE_DIR}"
   "${PEABODY_ROOT}/McLib2/LibUtility/include"
   "${DEFORMABLE_FUSION_DIR}/Common/cuda"
   "${DEFORMABLE_FUSION_DIR}/Utility"
@@ -116,7 +117,7 @@ target_compile_definitions(project_options INTERFACE
 )
 target_compile_options(project_options INTERFACE
   $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
-  $<$<COMPILE_LANGUAGE:CXX>:-include${PEABODY_ROOT}/LinuxCompat.h>
+  $<$<COMPILE_LANGUAGE:CXX>:-include${PEABODY_COMPAT_INCLUDE_DIR}/LinuxCompat.h>
   $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated>
   $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-result>
   $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
@@ -242,8 +243,8 @@ target_link_libraries(FastNonrigidMatching PUBLIC
 )
 get_target_property(FAST_MATCH_OBJECTS FastNonrigidMatching SOURCES)
 
-add_executable(OfflineFolderFusion
-  DeformableFusion/OfflineFolderFusion/OfflineFolderFusion.cpp
+add_executable(DeformableFusionDemo
+  DeformableFusion/DeformableFusionDemo/DeformableFusionDemo.cpp
   DeformableFusion/FusionDemo-MultiView/FusionConfig.cpp
   DeformableFusion/FusionDemo-MultiView/GlobalDataStatic.cpp
   ${FAST_MATCH_OBJECTS}
@@ -251,24 +252,24 @@ add_executable(OfflineFolderFusion
 
 # Cruciale: Diciamo a CMake che il linker finale deve essere CUDA (NVCC) 
 # e abilitiamo la compilazione separata sui sorgenti aggregati.
-set_target_properties(OfflineFolderFusion PROPERTIES
+set_target_properties(DeformableFusionDemo PROPERTIES
   LINKER_LANGUAGE CUDA
   CUDA_SEPARABLE_COMPILATION ON
   CUDA_RESOLVE_DEVICE_SYMBOLS ON
   POSITION_INDEPENDENT_CODE ON
 )
 
-target_compile_options(OfflineFolderFusion PRIVATE
+target_compile_options(DeformableFusionDemo PRIVATE
   $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-fPIC>
 )
 
 # Garantisce che l'eseguibile trovi gli header interni di FastNonrigidMatching
-target_include_directories(OfflineFolderFusion PRIVATE
+target_include_directories(DeformableFusionDemo PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/DeformableFusion/FastNonrigidMatching
 )
 
 # Configurazione del Linker con gestione dei cicli di dipendenze C++
-target_link_libraries(OfflineFolderFusion PRIVATE
+target_link_libraries(DeformableFusionDemo PRIVATE
   # Il gruppo risolve ricorsivamente i link incrociati (es. cameraSpace2worldSpace in CameraView/Basics)
   -Wl,--start-group
   NonRigidMatch
@@ -297,4 +298,4 @@ target_link_libraries(OfflineFolderFusion PRIVATE
   ${JSONCPP_LIBRARIES}
   ${VXL_CORE_LIBS}
 )
-install(TARGETS OfflineFolderFusion RUNTIME DESTINATION bin)
+install(TARGETS DeformableFusionDemo RUNTIME DESTINATION bin)

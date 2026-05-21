@@ -429,7 +429,7 @@ bool write_surface_obj(const fs::path& path, const PreviewSurface& surface, cons
 	std::ofstream out(path);
 	if (!out) return false;
 
-	out << "# OfflineFolderFusion F2F surface export\n";
+	out << "# DeformableFusionDemo F2F surface export\n";
 	out << "# Coordinates are in centimeters.\n";
 	for (int i = 0; i < surface.vtNum; ++i)
 	{
@@ -626,7 +626,7 @@ bool show_live_preview(const fs::path& surfacePath, const cv::Mat* colorImage, c
 	}
 
 	static bool windowCreated = false;
-	const char* windowName = "OfflineFolderFusion live F2F preview";
+	const char* windowName = "DeformableFusionDemo live F2F preview";
 	if (!windowCreated)
 	{
 		cv::namedWindow(windowName, cv::WINDOW_NORMAL);
@@ -894,7 +894,7 @@ void initialize_live_3d_viewer(int argc, char** argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
 	glutInitWindowSize(g_viewer3d.width, g_viewer3d.height);
-	g_viewer3d.window = glutCreateWindow("OfflineFolderFusion 3D live mesh");
+	g_viewer3d.window = glutCreateWindow("DeformableFusionDemo 3D live mesh");
 	glutDisplayFunc(display_live_3d_viewer);
 	glutReshapeFunc(reshape_live_3d_viewer);
 	glutKeyboardFunc(keyboard_live_3d_viewer);
@@ -1126,7 +1126,7 @@ void print_usage()
 {
 	std::cout
 		<< "Usage:\n"
-		<< "  OfflineFolderFusion.exe --depth-dir C:\\data\\depth --output C:\\data\\out [options]\n\n"
+		<< "  DeformableFusionDemo --depth-dir ../Dataset/upperbody/data --output ../Dataset/outputs [options]\n\n"
 		<< "Options:\n"
 		<< "  --input DIR              Folder containing depth/rgb files; depth files are filtered by --depth-token.\n"
 		<< "  --depth-dir DIR          Folder containing depth images. Overrides --input for depth.\n"
@@ -1403,7 +1403,7 @@ int main(int argc, char** argv)
 	}
 	catch (const std::exception& ex)
 	{
-		std::cerr << "OfflineFolderFusion error: " << ex.what() << "\n\n";
+		std::cerr << "DeformableFusionDemo error: " << ex.what() << "\n\n";
 		print_usage();
 		return 1;
 	}

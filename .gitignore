@@ -343,3 +343,5 @@ TM_Build_Version.h
 build/
 build-linux/
 Dataset/
+.agents/
+.codex/
