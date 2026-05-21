@@ -4,7 +4,13 @@
 #include "geometry_types_cuda.h"
 #include "cuda_math_common.cuh"
 #include "Logger.h"
-#include "EDMatchingHelperCudaImpl.cuh"
+#include "EDMatchingHelperCudaImpl_GPU.cuh"
+
+namespace Fusion4D_GPU {
+#if !defined(FUSION4D_GPU_HAS_CUDA_ALIAS)
+namespace cuda = ::cuda;
+#define FUSION4D_GPU_HAS_CUDA_ALIAS
+#endif
 
 //helper double based atomicAdd
 __device__ double atomicAddDoubleREG(double* address, double val)
@@ -1189,4 +1195,5 @@ evaluate_cost_reg_vRobust(DeformGraphNodeCuda *dev_ed_nodes, DeformGraphNodeCore
 	}
 }
 
+}  // namespace Fusion4D_GPU
 #endif // __EDMATCHINGHELPERCUDAIMPL_REGTERM_CU__

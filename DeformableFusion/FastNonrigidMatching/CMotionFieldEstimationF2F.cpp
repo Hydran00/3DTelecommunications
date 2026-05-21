@@ -79,7 +79,7 @@ set_up_1st_frame(cudaArray *cu_3dArr_depth,
 		}
 	}
 
-	vol_fusion.init_volume_with_curr_depth(vol_fusion.dev_volume(), true);
+	vol_fusion.init_volume_with_curr_depth(vol_fusion.dev_volume(), bUseVisualHullForFusingCurrentDepth && bUseDepthTopBitAsSeg);
 	vol_fusion.marching_cubes(vol_fusion.dev_volume(), vol_fusion.dev_vts(), vol_fusion.vts_num_gpu(), vol_fusion.vt_dim());
 
 	//set vts_t as vts

@@ -9,19 +9,38 @@
 #include "cuda_math_common.cuh"
 #include "CudaTextureHandles.h"
 #include "Logger.h"
+#include "EDMatchingHelperCudaImpl_GPU.cuh"
 
-// Texture / surface objects for CUDA 12 compatibility
-cudaTextureObject_t tex_depthImgs = 0;
-cudaTextureObject_t tex_normalMaps = 0;
-cudaSurfaceObject_t surf_visHull = 0; // short. occupied 1. empty 0. (invalid -1)
-cudaTextureObject_t tex_visHull = 0;
+namespace Fusion4D_GPU {
+#if !defined(FUSION4D_GPU_HAS_CUDA_ALIAS)
+namespace cuda = ::cuda;
+#define FUSION4D_GPU_HAS_CUDA_ALIAS
+#endif
+
 __constant__ __device__ CameraViewCuda dev_cam_views[MAX_NUM_DEPTH_CAMERAS];
 __constant__ __device__ int dev_num_cam_views;
 int host_num_cam_views = 10; // 10 is the usual number of PODs in a rig. This value is just used to initialize global variable 'host_num_cam_views' and will be dynamically set by the config file
 
 __device__ float dev_global_cost;
 
-#include "EDMatchingHelperCudaImpl_visualhull.cu"
+#ifndef VISUAL_HULL_GRADIENT_DEFINED
+inline __device__ cuda_vector_fixed<float, 3> visual_hull_gradient(int xId, int yId, int zId, float vxl_res)
+{
+	cuda_vector_fixed<float, 3> g_vis_hull;
+	float P_x0 = tex3D<float>(tex_visHull, (float)(xId - 1), (float)yId, (float)zId);
+	float P_x2 = tex3D<float>(tex_visHull, (float)(xId + 1), (float)yId, (float)zId);
+	g_vis_hull[0] = (P_x2 - P_x0) / (2.0f * vxl_res);
+	float P_y0 = tex3D<float>(tex_visHull, (float)xId, (float)(yId - 1), (float)zId);
+	float P_y2 = tex3D<float>(tex_visHull, (float)xId, (float)(yId + 1), (float)zId);
+	g_vis_hull[1] = (P_y2 - P_y0) / (2.0f * vxl_res);
+	float P_z0 = tex3D<float>(tex_visHull, (float)xId, (float)yId, (float)(zId - 1));
+	float P_z2 = tex3D<float>(tex_visHull, (float)xId, (float)yId, (float)(zId + 1));
+	g_vis_hull[2] = (P_z2 - P_z0) / (2.0f * vxl_res);
+
+	return g_vis_hull;
+}
+#define VISUAL_HULL_GRADIENT_DEFINED
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1496,7 +1515,5 @@ void EDMatchingHelperCudaImpl::bind_cuda_array_to_texture_normal(cudaArray *cu_3
 	}
 }
 
-#include "EDMatchingHelperCudaImpl_rigid.cu"
-#include "EDMatchingHelperCudaImpl_residual.cu"
-#include "EDMatchingHelperCudaImpl_keypts.cu"
+}  // namespace Fusion4D_GPU
 #endif

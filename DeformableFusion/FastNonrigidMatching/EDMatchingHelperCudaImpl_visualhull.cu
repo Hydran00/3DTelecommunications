@@ -1,9 +1,15 @@
 #ifndef __EDMATCHINGHELPERCUDAIMPL_VISUALHULL_CU__
 #define __EDMATCHINGHELPERCUDAIMPL_VISUALHULL_CU__
-#include "EDMatchingHelperCudaImpl.cuh"
+#include "EDMatchingHelperCudaImpl_GPU.cuh"
 #include "geometry_types_cuda.h"
 #include "cuda_math_common.cuh"
 #include "CudaTextureHandles.h"
+
+namespace Fusion4D_GPU {
+#if !defined(FUSION4D_GPU_HAS_CUDA_ALIAS)
+namespace cuda = ::cuda;
+#define FUSION4D_GPU_HAS_CUDA_ALIAS
+#endif
 
 template <bool bUseSegmentation>
 __global__ void VisualHullOccupancy_Kernel(int3 const *dev_visual_hull_dim, float3 const *dev_visual_hull_offset, float visual_hull_res,
@@ -468,4 +474,5 @@ void EDMatchingHelperCudaImpl::allocate_and_bind_vishull_cu3dArray()
 	}
 }
 
+}  // namespace Fusion4D_GPU
 #endif

@@ -14,7 +14,13 @@ static cudaTextureObject_t tex_ndIds = 0;
 #include "geometry_types_cuda.h"
 #include "cuda_math_common.cuh"
 #include "Logger.h"
-#include "EDMatchingHelperCudaImpl.cuh"
+#include "EDMatchingHelperCudaImpl_GPU.cuh"
+
+namespace Fusion4D_GPU {
+#if !defined(FUSION4D_GPU_HAS_CUDA_ALIAS)
+namespace cuda = ::cuda;
+#define FUSION4D_GPU_HAS_CUDA_ALIAS
+#endif
 
 __device__ int dev_globalPos; // count of jtj blocks (diagonal only)
 __device__ int dev_globalOffset;
@@ -613,4 +619,5 @@ void EDMatchingHelperCudaImpl::allocate_jtj_related_memory(int vts_num_max)
 
 #include "EDMatchingHelperCudaImplInit_v2.cu"
 #include "EDMatchingHelperCudaImplInit_v2_reg.cu"
+}  // namespace Fusion4D_GPU
 #endif

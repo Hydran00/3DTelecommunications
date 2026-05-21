@@ -5,7 +5,13 @@
 #include "cuda_math_common.cuh"
 #include "CudaTextureHandles.h"
 #include "Logger.h"
-#include "EDMatchingHelperCudaImpl.cuh"
+#include "EDMatchingHelperCudaImpl_GPU.cuh"
+
+namespace Fusion4D_GPU {
+#if !defined(FUSION4D_GPU_HAS_CUDA_ALIAS)
+namespace cuda = ::cuda;
+#define FUSION4D_GPU_HAS_CUDA_ALIAS
+#endif
 
 __global__ void calc_key_points_in_reference_kernel(float const *dev_vts, float const *dev_vts_t, int vt_dim,
 													int const *__restrict__ dev_depth_maps_proj, int const *__restrict__ dev_depth_maps_corr_vtIdx,
@@ -585,4 +591,5 @@ void EDMatchingHelperCudaImpl::allocate_mem_for_keypts_matching(int keypts_num_m
 	checkCudaErrors(cudaMalloc(&(dev_ngns_weights_keypts_), sizeof(float) * keypts_num_max * NEIGHBOR_EDNODE_NUM));
 }
 
+}  // namespace Fusion4D_GPU
 #endif

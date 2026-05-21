@@ -9,6 +9,7 @@
 #include <math.h>
 #include "../Common/debug.h"
 #include "../../Peabody.h"
+#include "CudaTextureHandles.h"
 
 #define MAX_THREADS_PER_BLOCK 1024
 #define M_EPS 1.0e-6f
@@ -118,12 +119,17 @@ __forceinline__ __device__ void depth_remove_top_bit(unsigned short &d)
 // foreground hard-thresholding by depth value
 __forceinline__ __device__ void depth_extract_fg(unsigned short &d)
 {
-#ifndef DISABLE_FOREGROUND_DEPTH_THRESHOLD
-	if (d >= 0x8000)
-		d &= 0x7fff;
+	if (dev_use_depth_top_bit_as_seg)
+	{
+		if (d >= 0x8000)
+			d &= 0x7fff;
+		else
+			d = 0;
+	}
 	else
-		d = 0;
-#endif // DISABLE_FOREGROUND_DEPTH_THRESHOLD
+	{
+		depth_remove_top_bit(d);
+	}
 }
 
 __forceinline__ __device__ void depth_extract_fg_set_bg_as_far(unsigned short &d)

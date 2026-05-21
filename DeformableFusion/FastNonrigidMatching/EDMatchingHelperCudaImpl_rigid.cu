@@ -5,7 +5,13 @@
 #include "cuda_math_common.cuh"
 #include "CudaTextureHandles.h"
 #include "Logger.h"
-#include "EDMatchingHelperCudaImpl.cuh"
+#include "EDMatchingHelperCudaImpl_GPU.cuh"
+
+namespace Fusion4D_GPU {
+#if !defined(FUSION4D_GPU_HAS_CUDA_ALIAS)
+namespace cuda = ::cuda;
+#define FUSION4D_GPU_HAS_CUDA_ALIAS
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -820,4 +826,5 @@ void EDMatchingHelperCudaImpl::
 	checkCudaErrors(cudaMemcpy(partial_jtfs, dev_partial_JtFs_rigid_align_, sizeof(float) * 6 * this->partial_JtJs_rigid_align_count_, cudaMemcpyDeviceToHost));
 }
 
+}  // namespace Fusion4D_GPU
 #endif

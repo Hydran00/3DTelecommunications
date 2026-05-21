@@ -252,6 +252,9 @@ namespace VolumetricFusionCuda
 
 	void VolumetricFusionHelperCudaImpl::label_fg_and_tighten_bbox(BoundingBox3DCuda bbox, bool bUseDepthTopBitAsSeg, float granularity)
 	{
+		int use_depth_top_bit_as_seg = bUseDepthTopBitAsSeg ? 1 : 0;
+		checkCudaErrors(cudaMemcpyToSymbol(dev_use_depth_top_bit_as_seg, &use_depth_top_bit_as_seg, sizeof(int)));
+
 		init_bbox_kernel<<<1, 1>>>(dev_bbox_fg_cur_);
 
 		dim3 threads_per_block(32, 32);

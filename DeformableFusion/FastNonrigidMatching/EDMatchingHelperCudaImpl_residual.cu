@@ -5,7 +5,13 @@
 #include "cuda_math_common.cuh"
 #include "CudaTextureHandles.h"
 #include "Logger.h"
-#include "EDMatchingHelperCudaImpl.cuh"
+#include "EDMatchingHelperCudaImpl_GPU.cuh"
+
+namespace Fusion4D_GPU {
+#if !defined(FUSION4D_GPU_HAS_CUDA_ALIAS)
+namespace cuda = ::cuda;
+#define FUSION4D_GPU_HAS_CUDA_ALIAS
+#endif
 
 #ifndef VISUAL_HULL_GRADIENT_DEFINED
 inline __device__ cuda_vector_fixed<float, 3> visual_hull_gradient(int xId, int yId, int zId, float vxl_res)
@@ -911,4 +917,5 @@ void EDMatchingHelperCudaImpl::
 	}
 }
 
+}  // namespace Fusion4D_GPU
 #endif

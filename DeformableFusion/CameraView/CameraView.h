@@ -138,7 +138,7 @@ public:
 	/* all the following function return a 3D vector*/
 	double* cameraSpace2worldSpace(double p[3]) const;
 	double* cameraSpace2worldSpace(double x, double y, double z) const;
-	inline void cameraSpace2worldSpace(double p[3], double c[3]) const;
+	void cameraSpace2worldSpace(double p[3], double c[3]) const;
 	float* cameraSpace2worldSpace(float p[3]) const;
 	float* cameraSpace2worldSpace(float x, float y, float z) const;
 	void cameraSpace2worldSpace(float p[3], float c[3]) const;

@@ -3,7 +3,7 @@
 
 #include <cuda_runtime.h>
 
-// Host-side texture/surface handles. Defined in EDMatchingHelperCudaImpl.cu.
+// Host-side texture/surface handles. Defined in CudaTextureHandles.cu.
 extern cudaTextureObject_t tex_depthImgs;
 extern cudaTextureObject_t tex_normalMaps;
 extern cudaSurfaceObject_t surf_visHull;
@@ -20,6 +20,7 @@ extern __device__ cudaSurfaceObject_t surf_visHull_dev;
 extern __device__ cudaTextureObject_t tex_visHull_dev;
 extern __device__ cudaTextureObject_t tex_depthImgs_dev;
 extern __device__ cudaTextureObject_t tex_normalMaps_dev;
+extern __device__ int dev_use_depth_top_bit_as_seg;
 
 #if defined(__CUDA_ARCH__)
 #define tex_ndIds ::tex_ndIds_dev

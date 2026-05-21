@@ -19,6 +19,8 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
   set(CMAKE_CUDA_ARCHITECTURES 75 CACHE STRING "CUDA architectures; 75 matches RTX 2080 Ti")
 endif()
 
+set(PEABODY_VOLUME_CUBES_DIM_MAX 50 CACHE STRING "Maximum two-level TSDF volume dimension in coarse cubes")
+
 set(PEABODY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 set(DEFORMABLE_FUSION_DIR "${PEABODY_ROOT}/DeformableFusion")
 
@@ -110,6 +112,7 @@ target_include_directories(project_options INTERFACE
 )
 target_compile_definitions(project_options INTERFACE
   MCLIB2_CONFIG_INC=<Config.h>
+  TWO_LEVEL_VOLUME_CUBES_DIM_MAX=${PEABODY_VOLUME_CUBES_DIM_MAX}
 )
 target_compile_options(project_options INTERFACE
   $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
@@ -197,9 +200,12 @@ peabody_static_library(FastNonrigidMatching
   DeformableFusion/FastNonrigidMatching/LinearSolverCuSolver.cpp
   DeformableFusion/FastNonrigidMatching/volumetric_fusion_GPU.cpp
 
-  # --- FILE CUDA MASTER (Tieni solo questi) ---
   DeformableFusion/FastNonrigidMatching/DeformGraphCudaImpl_GPU.cu
   DeformableFusion/FastNonrigidMatching/EDMatchingHelperCudaImpl.cu
+  DeformableFusion/FastNonrigidMatching/EDMatchingHelperCudaImpl_visualhull.cu
+  DeformableFusion/FastNonrigidMatching/EDMatchingHelperCudaImpl_rigid.cu
+  DeformableFusion/FastNonrigidMatching/EDMatchingHelperCudaImpl_residual.cu
+  DeformableFusion/FastNonrigidMatching/EDMatchingHelperCudaImpl_keypts.cu
   DeformableFusion/FastNonrigidMatching/lmsolver_gpu_impl.cu
   DeformableFusion/FastNonrigidMatching/mc_mesh_processing.cu
   DeformableFusion/FastNonrigidMatching/NormalEquationSolverPCGCuda_GPU.cu
@@ -208,14 +214,10 @@ peabody_static_library(FastNonrigidMatching
   DeformableFusion/FastNonrigidMatching/volumetric_fusion_impl_GPU.cu
   DeformableFusion/FastNonrigidMatching/cuda_common_kernels.cu
   DeformableFusion/FastNonrigidMatching/fast_pcg.cu
-
-  # --- FILE SOTTO-MODULI (Rimuovili o commentali tutti!) ---
+  DeformableFusion/FastNonrigidMatching/CudaTextureHandles.cu
   DeformableFusion/FastNonrigidMatching/EDMatchingHelperCudaImplInit.cu
   DeformableFusion/FastNonrigidMatching/EDMatchingHelperCudaImplRegTerm.cu
-  DeformableFusion/FastNonrigidMatching/EDMatchingHelperCudaImpl_GPU.cu
 
-
-  # --- FILE CPP RESTANTI ---
   DeformableFusion/FastNonrigidMatching/lmsolver.cpp
   DeformableFusion/FastNonrigidMatching/EDMatchingLSQProblem.cpp
   DeformableFusion/FastNonrigidMatching/lmsolver_gpu.cpp

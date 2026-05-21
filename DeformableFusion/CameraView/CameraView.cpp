@@ -848,7 +848,7 @@ Rect3D* GCameraView::getImagePlane(double d) const
 }
 
 
-inline void GCameraView::cameraSpace2worldSpace(double p[3], double c[3]) const
+void GCameraView::cameraSpace2worldSpace(double p[3], double c[3]) const
 {
 	for(int i=0; i<3; i++)
 	{
